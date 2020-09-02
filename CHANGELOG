@@ -1,0 +1,39 @@
+C CHANGELOG :
+C *** 1.0   *** - Original version
+C *** 1.1   *** - Support for fchk files
+C *** 1.1.1 *** - N-(De)loc indices expansion up to 14
+C                 (looporb files not included)
+C               - Small changes and bug fixes
+C *** 1.1.2 *** - Memory use in subroutine "connect" reduced removing a
+C                 dispensable array
+C *** 1.1.3 *** - Sort atoms in the ring according to the connectivity.
+C                 This allows to easily implement Giambiagi's indices.
+C *** 1.2   *** - Giambiagi index implementation full implemented. The
+C                 program is able to calculate Giambiagi's indices only.
+C *** 1.2.1 *** - Giambiagi index with full sorting in all cases.
+C *** 1.2.2 *** - Total summation of 2-(de)loc indices was added.
+C *** 1.2.3 *** - BUGFIX :  Percentage calculation in "Ponec part".
+C               - Short texts added in "results" to distinguish the 
+C                 2-(de)loc indices.
+C                 The new texts are "LOC :" and "DELOC :".
+C               - Total number of specificied atoms added in the output
+C *** 1.2.4 *** - BUGFIX :  In molecules with different size rings (4,6,
+C                 ..., the detection process worked inappropriately 
+C                 since there were atoms with one bond in the ring-con-
+C                 nectivity matrix. These possible cases are skipped.
+C *** 1.2.5 *** - Included ndeloc.param.h (settings).
+C               - Output file is opened in subroutine "results".
+C *** 1.2.6 *** - First version using CMake.
+C *** 1.2.7 *** - First support for unrestricted calculations.
+C *** 1.2.8 *** - Choose the length of atomlabel (X1,X01,X001, ...)
+C *** 1.2.9 *** - XYZ files for Chemcraft with N-deloc indices if ring
+C                 and xyz options are employed.
+C *** 1.2.10 ** - Added the possibility of using ranges with '-',
+C                 e.g., "1-10,14" when the atoms are specified in the
+C                 corresponding section.
+C               - Added the numerical specification for MO section 
+C                 (1-10,43).
+C *** 1.2.11 ** - Support for eloc format (STOCK program). Bugfixes
+C *** 1.2.12 ** - Sigma contribution is up to now calculated if required.
+C               - OpenMP parallelization according to mulldeloc scheme.
+C               - Main CMakelist.txt updated.

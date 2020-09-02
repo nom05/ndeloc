@@ -1,0 +1,11 @@
+C#######################################################################
+C TODO      :
+C               - Engadir lectura de átomos por liña. Cada liña repre-
+C                 sentará un anel.
+C               - Non ter en conta elementos das matrices de solapamento
+C                 demasiado pequenos. Ordear elementos e separar cálculo
+C                 en minimatrices cadradas?
+C               - Imprimir fchk's con termos deloc(O1,r2).
+C               - Simetría para eliminar anéis repetidos? Debería ir 
+C                 antes do detector de anéis.
+C#######################################################################
