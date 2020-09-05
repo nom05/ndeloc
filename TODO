@@ -8,4 +8,7 @@ C                 en minimatrices cadradas?
 C               - Imprimir fchk's con termos deloc(O1,r2).
 C               - Simetría para eliminar anéis repetidos? Debería ir 
 C                 antes do detector de anéis.
+C               - Lectura de BOM dende o Multiwfn.
+C               - Soporte para orbitais naturais.
+C               - Soporte para concas ELF.
 C#######################################################################

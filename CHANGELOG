@@ -37,3 +37,4 @@ C *** 1.2.11 ** - Support for eloc format (STOCK program). Bugfixes
 C *** 1.2.12 ** - Sigma contribution is up to now calculated if required.
 C               - OpenMP parallelization according to mulldeloc scheme.
 C               - Main CMakelist.txt updated.
+C *** 1.2.13 ** - Support for Multiwfn atomic overlap matrices (AOM.txt)

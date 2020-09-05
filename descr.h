@@ -40,6 +40,10 @@
      ."              *  aimall -> int format to be used: mol_X01."    ,/
      ."                           (same file name fmt,diff. data str.",/
      ."              *  eloc   -> eloc format to be used: mol."       ,/
+     ."              *  mwfn   -> Multiwfn format to be used."        ,/
+     ."                           =read is optional and it will read ",/
+     ."                           the next line to obtain the file   ",/
+     ."                           name.                              ",/
      ."              *  Integer-> length for atom label"              ,/
      ."                           (1=X1,2=X01,3=X001, ...)"           ,/
      ."     o Lines 7-... :  Files (if applicable)."                  ,/

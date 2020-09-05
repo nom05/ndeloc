@@ -73,6 +73,16 @@ C*1-3,6,7,10 ring   * -> Atoms 1,2,3,6,7,10 will be used with a ring sort.
 C*int 5             * -> int format will be employed with atom label
 C********************    length 5, i.e., X00001.
 C
+C                      Example 6 : C6H6.ndinp  file
+C********************
+C*C6H6              * -> WFN  reading algorith will be used.
+C*example5          * -> Output file name without extension.
+C*7-15,20-22        * -> MO specification: 7,8,9,10,11,12,13,14,15,20,21,22
+C*6 deloc giamb     * -> 6-DELOC indices. DELOC and Giambiagi indices only.
+C*1-3,6,7,10 ring   * -> Atoms 1,2,3,6,7,10 will be used with a ring sort.
+C*mwfn              * -> Multiwfn format will be employed. The program
+C********************    will search for AOM.txt by default
+C
 C ** If distance cut-off is omitted, 1.6 will be used by default **
 C      In general, it is a good default value for C-based rings
 C
@@ -81,6 +91,7 @@ C
 C-----------------------------------------------------------------------
       implicit real*8 (a-h,o-z)
       logical        debug,filex,genint,lloc,intfuk,lfchk,lgiamb,laimall
+     ,              ,lmwfn,lmwfnrdname
       logical        runparal
       logical        lxyz
       logical        allmo,lpi,outersh,lsigma,loutsig
@@ -89,7 +100,7 @@ C-----------------------------------------------------------------------
       character*6    extndinp,extndout
       character*7    charint,version
       character*15   charreal
-      character*20   text
+      character*20   text,tmpname
       character*100  filwfn,filinp,filout,filw,filsom,command,filouw
       character*1000 nome
 C
@@ -428,13 +439,18 @@ C
      .detection <<")')
       endif !! (.NOT.allring) then
 C >>> Read file names (optional) lines 6 ...
+      nome(:)    = ''
       read(iinp,'(a)',iostat=iii) nome
       if (iii.ne.0) stop ' ** PROBLEM while the input file was read'
-      if (index(trim(nome),'read').GT.0) then
+      lmwfn      = .FALSE.
+      laimall    = .FALSE.
+      tmpname(:) = ''
+      tmpname    = trim(nome(:len(tmpname)))
+      if (index(tmpname(1:4),'read').GT.0) then
          genint = .FALSE.
          intfuk = .FALSE.
-         if (debug) print *,'** atomic overlap matrix files: ',genint,in
-     .tfuk
+         if (debug) print *,'** atomic overlap matrix files: '
+     ,                     ,genint,intfuk
          write(*,'("  >> Files will be read from the input file << ")')
          inpline = inpline + 1
       elseif (index(trim(nome),'int').GT.0) then
@@ -471,8 +487,19 @@ C >>> Read file names (optional) lines 6 ...
      .tfuk
          if (debug) print *,'** input file finished'
          write(*,'("  >> AOM File type ........ ",A)') 'eloc'
+      elseif (index(trim(nome),'mwfn').GT.0) then
+         genint = .FALSE.
+         intfuk = .TRUE.
+         lmwfn  = .TRUE.
+         lmwfnrdname = .FALSE.
+         if (index(trim(nome),'=read').GT.0) lmwfnrdname = .TRUE.
+         inpline = inpline + 1
+         if (debug) print *,'** atomic overlap matrix files: ',genint,in
+     .tfuk
+         if (debug) print *,'** input file finished'
+         write(*,'("  >> AOM File type ........ ",A)') 'mwfn'
       else
-         stop ' ** read,int,eloc or fuk were not specified'
+         stop ' ** read,int,eloc,mwfn or fuk were not specified'
       endif !! (index(trim(nome),'int').gt.0) then
       if (genint) then 
          print *,' ** Checking number of zeros in the file names'
@@ -516,7 +543,7 @@ C
      .     allatoms,allheavy,outersh,lpi,npi,lloc,nindex,ndeloc,inpline,
      .version,nheavy,lfchk,bonddist,mxring,allring,genint,intfuk,lgiamb,
      .  runparal,nproc,lsigma,loutsig,imos,ifrmo,ifrag,ixyz,lxyz,nzeros,
-     .                                             linear,laimall,debug)
+     .                           lmwfnrdname,lmwfn,linear,laimall,debug)
       call cpu_time(finish)
       write(iout,'(/)')
       if (allring) then

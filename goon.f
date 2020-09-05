@@ -4,12 +4,12 @@ C
      .     allatoms,allheavy,outersh,lpi,npi,lloc,nindex,ndeloc,inpline,
      .version,nheavy,lfchk,bonddist,mxring,allring,genint,intfuk,lgiamb,
      .  runparal,nproc,lsigma,loutsig,imos,ifrmo,ifrag,ixyz,lxyz,nzeros,
-     .                                             linear,laimall,debug)
+     .                           lmwfnrdname,lmwfn,linear,laimall,debug)
 C
 C-----------------------------------------------------------------------
       implicit double precision (a-h,o-z)
       logical        debug,filex,lloc,lfchk,luhf,lxyz
-      logical        genint,intfuk,laimall
+      logical        genint,intfuk,laimall,lmwfn,lmwfnrdname
       logical        allmo,lpi,outersh,lsigma,loutsig,linear
       logical        allatoms,allheavy,allring,lgiamb
       character*3    atemp
@@ -51,12 +51,12 @@ C***********************************************************************
      .nprim,nat,allmo,iato,iint,allatoms,allheavy,outersh,lpi,npi,lloc,n
      .index,ndeloc,inpline,nheavy,lfchk,bonddist,mxring,allring,genint,i
      .ntfuk,runparal,nproc,lsigma,loutsig,imos,ifrmo,ifrag,ixyz,lxyz,nze
-     .ros,laimall,linear,debug
+     .ros,laimall,lmwfn,linear,debug
       if (debug) print *,'                      iwfn,iout,iinp,isom,nmo,
      .nprim,nat,allmo,iato,iint,allatoms,allheavy,outersh,lpi,npi,lloc,n
      .index,ndeloc,inpline,nheavy,lfchk,bonddist,mxring,allring,genint,i
      .ntfuk,runparal,nproc,lsigma,loutsig,imos,ifrmo,ifrag,ixyz,lxyz,nze
-     .ros,laimall,linear,debug'
+     .ros,laimall,lmwfn,linear,debug'
 C
 C >>> Read wfn file      <<<
       if (lfchk) then
@@ -133,7 +133,7 @@ C >>> Read at ov matrix  <<<
             write(*,'(1X,a,$)') trim(charreal(verify(charreal,' '):15))
             if (debug) print *,'** input file finished'
          enddo !! i = 1,iato
-      elseif (.NOT.genint.AND.intfuk) then         !! >>>>>>>>>>>>> ELOC
+      elseif (.NOT.genint.AND.intfuk.AND..NOT.lmwfn) then !! >>>>>> ELOC
                filint(1) = trim(filw)//'.eloc'
                call       openfile(filint(1),iint,debug)
                call       eloc(iint ,nmo,nat,iato,iatomat,pop,ss,debug)
@@ -143,6 +143,24 @@ C >>> Read at ov matrix  <<<
                   write(*,'(1X,A,$)') trim(charreal(verify(charreal,' ')
      .:15))
                enddo !! i = 1,iato
+      elseif (.NOT.genint.AND.intfuk.AND.     lmwfn) then !! >>>>>> MWFN
+               if (.NOT.lmwfnrdname) then
+                  filint(1) = 'AOM.txt'
+               else
+                  read (iinp,'(A)',iostat=iii) nome
+                  if (iii.ne.0) 
+     .                  stop 'File with atomic overlap matrix not found'
+                  if (debug) print *,trim(nome)
+                  filint(1) = trim(nome)
+               endif !! (.NOT.lmwfnrdname) then
+               call       openfile(filint(1),iint,debug)
+               call       mwfn(iint ,nmo,nat,iato,iatomat,pop,ss,debug)
+               close(iint)
+c              do i = 1,iato
+c                 write(charreal,'(F6.2)') pop(i)
+c                 write(*,'(1X,A,$)') trim(charreal(verify(charreal,' ')
+c    .:15))
+c              enddo !! i = 1,iato
       elseif (genint.AND.intfuk) then               !! >>>>>>>>>>>>> INT
             do i = 1,iato
                filint(i) = trim(filw)//'_'//trim(atoms(i))//'.int'

@@ -131,6 +131,8 @@ set (READ
     ${rd}/atovmall.f
     ${rd}/eloc.f
     ${rd}/fchkinfo.f
+    ${rd}/mwfn.f
+    ${rd}/p1fromgauss.f90
     ${rd}/readfch.f
     ${rd}/readsom.f
     ${rd}/readwfn.f
