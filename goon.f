@@ -4,14 +4,14 @@ C
      .     allatoms,allheavy,outersh,lpi,npi,lloc,nindex,ndeloc,inpline,
      .version,nheavy,lfchk,bonddist,mxring,allring,genint,intfuk,lgiamb,
      .  runparal,nproc,lsigma,loutsig,imos,ifrmo,ifrag,ixyz,lxyz,nzeros,
-     .                           lmwfnrdname,lmwfn,linear,laimall,debug)
+     .          nbasin,laom,lbom,lmwfnrdname,lmwfn,linear,laimall,debug)
 C
 C-----------------------------------------------------------------------
       implicit double precision (a-h,o-z)
       logical        debug,filex,lloc,lfchk,luhf,lxyz
       logical        genint,intfuk,laimall,lmwfn,lmwfnrdname
       logical        allmo,lpi,outersh,lsigma,loutsig,linear
-      logical        allatoms,allheavy,allring,lgiamb
+      logical        allatoms,allheavy,allring,lgiamb,laom,lbom
       character*3    atemp
       character*7    atoms,version,charint
       character*15   charreal,atomlabel
@@ -51,12 +51,12 @@ C***********************************************************************
      .nprim,nat,allmo,iato,iint,allatoms,allheavy,outersh,lpi,npi,lloc,n
      .index,ndeloc,inpline,nheavy,lfchk,bonddist,mxring,allring,genint,i
      .ntfuk,runparal,nproc,lsigma,loutsig,imos,ifrmo,ifrag,ixyz,lxyz,nze
-     .ros,laimall,lmwfn,linear,debug
+     .ros,laimall,nbasin,laom,lbom,lmwfnrdname,lmwfn,linear,debug
       if (debug) print *,'                      iwfn,iout,iinp,isom,nmo,
      .nprim,nat,allmo,iato,iint,allatoms,allheavy,outersh,lpi,npi,lloc,n
      .index,ndeloc,inpline,nheavy,lfchk,bonddist,mxring,allring,genint,i
      .ntfuk,runparal,nproc,lsigma,loutsig,imos,ifrmo,ifrag,ixyz,lxyz,nze
-     .ros,laimall,lmwfn,linear,debug'
+     .ros,laimall,nbasin,laom,lbom,lmwfnrdname,lmwfn,linear,debug'
 C
 C >>> Read wfn file      <<<
       if (lfchk) then
@@ -66,7 +66,7 @@ C >>> Read wfn file      <<<
          call    readwfn(iwfn,nmo,nprim,nat,debug,xx,yy,zz,nheavy,iq,
      .                                                      iheavy,luhf)
       endif !! (lfchk) then
-C >>> Read  atom matrix  <<<
+C >>> Read  atom/basin matrix  <<<
       rewind(iinp)
       if (.NOT.allatoms.AND..NOT.allheavy) then
          if (debug) print *,' -> from input file'
@@ -77,7 +77,7 @@ C >>> Read  atom matrix  <<<
          if (debug) print *,'text line= "',trim(nome),'"'
          if (len(trim(nome)).EQ.1000) stop ' ** Line too long !!! **'
          j = 1
-         if (allring) then
+         if (allring) then !! Disabled for basins
             k = index(nome(j:len(trim(nome))),' ')
          else
             k = len(trim(nome))+1
@@ -85,16 +85,27 @@ C >>> Read  atom matrix  <<<
          if (debug) print *,'# characters=',k,len(trim(nome))
          call    procnumb(nome,k ,iato,ifrag,iatomat,n  ,debug)
 C >>> Check atom matrix  <<<
-         do i = 1,iato
-            if (iatomat(i).GT.nat) stop ' ** PROBLEM while the atom spec
-     .ification was read'
-         enddo !! i = 1,iato
+         if (minval(iatomat(:iato)).LT.1) stop 'Basin or atom specificat
+     .ion cannot be neither zero nor negative.'
+         if (laom.AND..NOT.lbom) then
+            do i = 1,iato
+               if (iatomat(i).GT.nat) 
+     .          stop ' ** PROBLEM while the atom specification was read'
+            enddo !! i = 1,iato
+         else if (lbom.AND..NOT.laom) then
+            if (nbasin.LT.maxval(iatomat(:iato))) stop '# basins < the m
+     .ax basin label'
+            if (minval(iatomat(:iato)).LT.1) stop 'Basins cannot be
+     .neither zero nor negative.'
+         else
+            stop 'AOM/BOM detectation failed'
+         endif !! (laom.AND..NOT.lbom) then
       else
          do i = 1,inpline-1
             read (iinp,*) atemp
          enddo !! i = 1,inpline
          if (allatoms) then
-            if (debug) print *,' -> all atoms'
+            if (debug) print *,' -> all atoms or basins'
             do i = 1,iato
                iatomat(i) = i
             enddo !! i = 1,nat
@@ -145,7 +156,8 @@ C >>> Read at ov matrix  <<<
                enddo !! i = 1,iato
       elseif (.NOT.genint.AND.intfuk.AND.     lmwfn) then !! >>>>>> MWFN
                if (.NOT.lmwfnrdname) then
-                  filint(1) = 'AOM.txt'
+                  if (laom) filint(1) = 'AOM.txt'
+                  if (lbom) filint(1) = 'BOM.txt'
                else
                   read (iinp,'(A)',iostat=iii) nome
                   if (iii.ne.0) 
@@ -154,7 +166,8 @@ C >>> Read at ov matrix  <<<
                   filint(1) = trim(nome)
                endif !! (.NOT.lmwfnrdname) then
                call       openfile(filint(1),iint,debug)
-               call       mwfn(iint ,nmo,nat,iato,iatomat,pop,ss,debug)
+               call       mwfn(iint ,nmo,nat,laom,lbom,iato,iatomat,pop
+     ,                                                        ,ss,debug)
                close(iint)
 c              do i = 1,iato
 c                 write(charreal,'(F6.2)') pop(i)
@@ -296,7 +309,7 @@ C
      . iato,iatomat,nat ,iq,matindx,atoms,filint,allmo,outersh,lpi,lloc,
      .    giamb,lgiamb,version,imo ,lfchk,bonddist,allring,ntotdel,luhf,
      . loutsig,lsigma,genint,intfuk,moc,ixyz,lxyz,xx,yy,zz,xyzgc,nzeros,
-     .                                                     linear,debug)
+     .                                    nbasin,laom,lbom,linear,debug)
       deallocate(xyzgc,ss)
       write(*,'(" Done")') 
 C

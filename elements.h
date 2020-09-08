@@ -2,8 +2,9 @@ C
 C  ** KEEP THIS FORMAT, PLEASE **
 C
       character*3   elem
-      dimension  elem(80)
-      data elem/'H  ','He ','Li ','Be ','B  ','C  ','N  ','O  ','F  ',
+      dimension  elem(0:80)
+      data elem/'b  ',
+     .          'H  ','He ','Li ','Be ','B  ','C  ','N  ','O  ','F  ',
      .          'Ne ','Na ','Mg ','Al ','Si ','P  ','S  ','Cl ','Ar ',
      .          'K  ','Ca ','Sc ','Ti ','V  ','Cr ','Mn ','Fe ','Co ',
      .          'Ni ','Cu ','Zn ','Ga ','Ge ','As ','Se ','Br ','Kr ',

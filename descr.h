@@ -18,12 +18,18 @@
      ."              *  1,3-5  -> Numbering specif. will be"          ,/
      ."                           considered separated by comma or"   ,/
      ."                           dash (this example: 1,3,4,5)."      ,/
-     ."     o Line 4 :  N-(DE)LOC index specification:"               ,/
+     ."     o Line 4 :  N-(DE)LOC index specification and overlap "   ,/
+     ."                 matrix type:"                                 ,/
      ."              *  integer-> N-(DE)LOC index order."             ,/
      ."              *  deloc  -> Deloc index only (for n>2)."        ,/
      ."              *  giamb  -> Only Giambiagi index will be"       ,/
      ."                           considered."                        ,/
-     ."                           Ring option in line is recommended.",/
+     ."                           ring option in line 5 if available" ,/
+     ."                           is recommended."                    ,/
+     ."              *  aom    -> Atomic overlap matrices (default)." ,/
+     ."              *  bom    -> Basin  overlap matrices. mwfn is "  ,/
+     ."                           uniquely the compatible format for ",/
+     ."                           this option."    ,/
      ."     o Line 5 :  Atom specification:"                          ,/
      ."              *  all    -> All atoms will be included."        ,/
      ."              *  heavy  -> All heavy atoms will be included."  ,/

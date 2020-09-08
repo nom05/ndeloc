@@ -3,13 +3,14 @@ C-----------------------------------------------------------------------
      . iato,iatomat,nato,iq,matindx,atoms,filint,allmo,outersh,lpi,lloc,
      .    giamb,lgiamb,version,itmo,lfchk,bonddist,allring,ntotdel,luhf,
      . loutsig,lsigma,genint,intfuk,moc,ixyz,lxyz,xx,yy,zz,xyzgc,nzeros,
-     .                                                     linear,debug)
+     .                                    nbasin,laom,lbom,linear,debug)
 C
 C-----------------------------------------------------------------------
       implicit double precision (a-h,o-z)
       logical        debug,lloc,allmo,lpi,outersh,allring,lfchk,lgiamb,
-     .               lsigma,loutsig,linear
+     .               lsigma,loutsig,linear,laom,lbom
       logical        luhf,lxyz,genint,intfuk
+      character*3    aombom
       character*7    charint,charintd,atoms,version
       character*15   charreal,atomlabel
       character*54   formato
@@ -42,13 +43,15 @@ C***********************************************************************
      .cloc,deloc,nindex,ndeloc,iato,'iatomat',nato,iq,'matindx',trim(ato
      .ms(1)),trim(filint(1)),allmo,outersh,lpi,lloc,giamb,lgiamb,version
      .,itmo,lfchk,bonddist,allring,ntotdel,luhf,loutsig,lsigma,genint,in
-     .tfuk,'moc',ixyz,lxyz,'xx,yy,zz,xyzgc',nzeros,linear,debug
+     .tfuk,'moc',ixyz,lxyz,'xx,yy,zz,xyzgc',nzeros,nbasin,laom,lbom,line
+     .ar,debug
 
       if (debug) print *,'                        iout,nmo,nprim,nheavy,
      .cloc,deloc,nindex,ndeloc,iato, iatomat ,nato,iq, matindx ,     ato
      .ms(1) ,     filint(1) ,allmo,outersh,lpi,lloc,giamb,lgiamb,version
      .,itmo,lfchk,bonddist,allring,ntotdel,luhf,loutsig,lsigma,genint,in
-     .tfuk, moc ,ixyz,lxyz, xx,yy,zz,xyzgc ,nzeros,linear,debug'
+     .tfuk, moc ,ixyz,lxyz, xx,yy,zz,xyzgc ,nzeros,nbasin,laom,lbom,line
+     .ar,debug'
 C >>> Open output file
       open(unit=iout,file=filout,status='unknown',form='formatted')
 C >>> HEADER <<<
@@ -137,7 +140,23 @@ C >>> SUMMARY <<<
       write(charint,'(I7)') i
       write(iout,'(     5X,"* # (DE)LOC indices ..... ",a,
      .             " (LOC+DELOC)")')trim(charint(verify(charint,' '):7))
-      write(iout,'(     5X,"* Considered atoms ...... ",$)')
+      if (laom) then
+         write(iout,'(     5X,"* Atomic overlap matrices (AOM) employed 
+     .*")')
+         write(iout,'(     5X,"* Considered atoms ...... ",$)')
+         aombom(1:3) = 'AOM'
+      else if (lbom) then
+         write(iout,'(     5X,"* Basin  overlap matrices (BOM) employed 
+     .*")')
+         write(charint,'(I7)' ) nbasin
+         write(iout,'(     5X,"* Total # basins ........ ",A)')
+     .                              trim(charint(verify(charint,' '):7))
+         write(iout,'(     5X,"* Considered basins...... ",$)')
+         aombom(1:3) = 'BOM'
+      else
+         stop 'Structural problem in the program, Calculation type not d
+     .etected'
+      endif
       call       prepnumb(iato,iatomat,nome,debug)
       write(iout,'(A,$)') trim(nome)
       write(charint,'(I7)' ) iato
@@ -153,15 +172,15 @@ C >>> SUMMARY <<<
      .')
       endif !! (allring) then
       write(iout,'(/)')
-C >>> AOM FILES   <<<
+C >>> AOM/BOM FILES   <<<
       write(iout,'(     3X,">> FILES   :",/        )')
       if (.NOT.genint.AND.intfuk) then         !! >>>>>>>>>>>>> ELOC
-         write(iout,'(     5X,"* AOM File ",I3," .......... ",a)') 
-     .                                                 1,trim(filint(1))
+         write(iout,'(     5X,"* ",A," File ",I3," .......... ",a)') 
+     .                                    trim(aombom),1,trim(filint(1))
       else
          do i = 1,iato
-            write(iout,'(     5X,"* AOM File ",I3," .......... ",a)') 
-     .                                                 i,trim(filint(i))
+            write(iout,'(  5X,"* ",A," File ",I3," .......... ",a)') 
+     .                                    trim(aombom),i,trim(filint(i))
          enddo !! i = 1,iato
       endif !! (.NOT.genint.AND.intfuk) then   !! >>>>>>>>>>>>> ELOC
 C >>> XYZ FILES   <<<
@@ -275,10 +294,17 @@ C >>> GIAMBIAGI INDEX ONLY
                print *,'Formats :  ',trim(formato)
                print *,'matindx=',(matindx(1,j),j=1,nindex)
             endif !! (debug) then
-            do i = 1,ndeloc
-               write(iout,formato) i,(trim(atomlabel(matindx(i,j),nato,i
-     .q(matindx(i,j)),nzeros,debug)),j=1,nindex),giamb(i)
-            enddo !! i = 1,ndeloc
+            if (laom) then
+               do i = 1,ndeloc
+                  write(iout,formato) i,(trim(atomlabel(matindx(i,j)
+     ,        ,nato,iq(matindx(i,j)),nzeros,debug)),j=1,nindex),giamb(i)
+               enddo !! i = 1,ndeloc
+            else if (lbom) then
+               do i = 1,ndeloc
+                  write(iout,formato) i,(trim(atomlabel(matindx(i,j)
+     ,        ,nato,0               ,nzeros,debug)),j=1,nindex),giamb(i)
+               enddo !! i = 1,ndeloc
+            endif !! (laom) then
          else
 C >>> BOTH      INDICES (Giambiagi,Ponec)
             write(charint ,'(I5)') nindex
@@ -295,10 +321,19 @@ C >>> BOTH      INDICES (Giambiagi,Ponec)
                print *,'Formats :  ',trim(formato)
                print *,'matindx=',(matindx(1,j),j=1,nindex)
             endif !! (debug) then
-            do i = 1,ndeloc
-               write(iout,formato) i,(trim(atomlabel(matindx(i,j),nato,i
-     .q(matindx(i,j)),nzeros,debug)),j=1,nindex),giamb(i),deloc(i)
-            enddo !! i = 1,ndeloc
+            if (laom) then
+               do i = 1,ndeloc
+                  write(iout,formato) i,(trim(atomlabel(matindx(i,j)
+     ,        ,nato,iq(matindx(i,j)),nzeros,debug)),j=1,nindex),giamb(i)
+     ,                                                         ,deloc(i)
+               enddo !! i = 1,ndeloc
+            else if (lbom) then
+               do i = 1,ndeloc
+                  write(iout,formato) i,(trim(atomlabel(matindx(i,j)
+     ,        ,nato,0               ,nzeros,debug)),j=1,nindex),giamb(i)
+     ,                                                         ,deloc(i)
+               enddo !! i = 1,ndeloc
+            endif !! (laom) then
          endif !! (lgiamb) then
       endif !! (ndeloc.EQ.2) then
 C

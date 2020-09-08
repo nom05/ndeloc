@@ -2,10 +2,10 @@
 C
 C Program that calculates the N-DELOC indices.
 C
-C Nicolás Otero Martínez, January 12 2017
+C Nicolás Otero Martínez, September 8 2020
 C
 C =====================
-C === Version 1.2.12 ==
+C === Version 1.2.14 ==
 C =====================
 C
 C#######################################################################
@@ -66,7 +66,7 @@ C********************
 C                      Example 5 : C6H6.ndinp  file
 C********************
 C*C6H6              * -> WFN  reading algorith will be used.
-C*example5          * -> Output file name without extension.
+C*example5 xyz      * -> Output file name without extension.
 C*7-15,20-22        * -> MO specification: 7,8,9,10,11,12,13,14,15,20,21,22
 C*6 deloc giamb     * -> 6-DELOC indices. DELOC and Giambiagi indices only.
 C*1-3,6,7,10 ring   * -> Atoms 1,2,3,6,7,10 will be used with a ring sort.
@@ -76,12 +76,23 @@ C
 C                      Example 6 : C6H6.ndinp  file
 C********************
 C*C6H6              * -> WFN  reading algorith will be used.
-C*example5          * -> Output file name without extension.
+C*example6 xyz      * -> Output file name without extension.
 C*7-15,20-22        * -> MO specification: 7,8,9,10,11,12,13,14,15,20,21,22
-C*6 deloc giamb     * -> 6-DELOC indices. DELOC and Giambiagi indices only.
+C*6 deloc giamb aom * -> 6-DELOC indices. DELOC and Giambiagi indices only. AOMs will be read.
 C*1-3,6,7,10 ring   * -> Atoms 1,2,3,6,7,10 will be used with a ring sort.
 C*mwfn              * -> Multiwfn format will be employed. The program
 C********************    will search for AOM.txt by default
+C
+C                      Example 7 : C6H6.ndinp  file
+C********************
+C*C6H6              * -> WFN  reading algorith will be used.
+C*example7          * -> Output file name without extension.
+C*7-15,20-22        * -> MO specification: 7,8,9,10,11,12,13,14,15,20,21,22
+C*6 deloc giamb bom * -> 6-DELOC indices. DELOC and Giambiagi indices only. BOMs will be read.
+C*1-3,6,7,10        * -> Basins 1,2,3,6,7,10 from Multiwfn file will be used.
+C*mwfn              * -> Multiwfn format will be employed. The program
+C********************    will search for AOM.txt by default
+C NOTE: The use of basins disables ring detection.
 C
 C ** If distance cut-off is omitted, 1.6 will be used by default **
 C      In general, it is a good default value for C-based rings
@@ -92,6 +103,7 @@ C-----------------------------------------------------------------------
       implicit real*8 (a-h,o-z)
       logical        debug,filex,genint,lloc,intfuk,lfchk,lgiamb,laimall
      ,              ,lmwfn,lmwfnrdname
+      logical        laom,lbom
       logical        runparal
       logical        lxyz
       logical        allmo,lpi,outersh,lsigma,loutsig
@@ -102,6 +114,7 @@ C-----------------------------------------------------------------------
       character*15   charreal
       character*20   text,tmpname
       character*100  filwfn,filinp,filout,filw,filsom,command,filouw
+     ,              ,filabom
       character*1000 nome
 C
 C----------------------------------------------------------------------
@@ -117,6 +130,8 @@ C***********************************************************************
       include 'ndeloc.param.h'  !! MAX VALUES, SOME OPTIONS, DEBUG FLAG
 C***********************************************************************
 C
+      laom = .TRUE.
+      lbom = .FALSE.
       write(*,'(/,14X,a,a,/)') ' N D E L O C  v.',trim(version)
       if (debug) print *,'DEBUG flag is activated'
       call getarg (2,nome)
@@ -159,7 +174,7 @@ C >>> Open the wfn/fchk file <<<   line 1
       if (iword.EQ.2) then
          read (nome(ipos+1:j),'(I5)') nproc
          if (debug) print *,'nproc=',nproc
-      else
+      else if (iword.GT.2) then
          stop ' ** Too many arguments in the LINE 1 were read'
       endif !! (iword.EQ.1) then
       if (nproc.GT.1) then
@@ -334,6 +349,17 @@ C >>> Select N-(DE)LOC index<<<  line 4
       read (charint,*) nindex
       write(*,'("  >> ",a,"-(DE)LOC will be calculated <<")')trim(charin
      .t(verify(charint,' '):7))
+      laom    = index(trim(nome),'aom').GT.0
+      lbom    = index(trim(nome),'bom').GT.0
+      if (lbom) then
+         write(*,'("  >> Basin overlap matrices will be read <<")')
+         write(*,'("  >> WARNING: Ring detection disabled with BOMs !! <
+     .<")')
+      else
+         write(*,'("  >> Atomic overlap matrices will be read <<")')
+         laom = .TRUE.
+      endif !! (lbom) then
+      if (lbom.AND.laom) stop 'AOMs and BOMs cannot be combined'
 C >>> Initial data       <<<
       if (lfchk) then
          call fchkinfo(iwfn,nmo,nprim,nat,nheavy,debug)
@@ -351,7 +377,7 @@ C >>> Initial data       <<<
       write(*,'("  >> NHeavy Atoms ......... ",$)') 
       write(charint,'(I7)') nheavy
       write(*,'(a       )') trim(charint(verify(charint,' '):7))
-C >>> Select Atoms          <<<  line 5
+C >>> Select Atoms or basins<<<  line 5
       read(iinp,'(a)',iostat=iii) nome
       if (iii.ne.0) stop ' ** PROBLEM while the input file was read'
       inpline = inpline + 1
@@ -360,8 +386,15 @@ C >>> Select Atoms          <<<  line 5
       allheavy = .FALSE.
       if (index(trim(nome),'all').GT.0) then
          allatoms = .TRUE.
-         iato     = nat
+         if (laom) then
+            iato     = nat
+         else if (lbom) then
+            if (debug) PRINT *,'# of BOMs will be determined later ...'
+         else
+            stop 'AOM or BOM not detected.'
+         endif !! (laom) then
       elseif (index(trim(nome),'heavy').GT.0) then
+         if (lbom) stop 'This option is only for HEAVY ATOMS in AOMs!!'
          allheavy = .TRUE.
          iato     = nheavy
       else
@@ -376,11 +409,18 @@ C >>> Select Atoms          <<<  line 5
      .,10X,"** CHECK THE ATOM ORDER !!! ***",/)')
       endif !! (allring) then
       write(charint,'(I7)') iato
-      write(*,'("  >> # Specified atoms .... ",a)') trim(charint(verify(
-     .charint,' '):7))
-      if (iato.LT.nindex) stop ' ** PROBLEM :  The number of atoms is no
-     .t enough to perform the calculation'
-      if (allring) then 
+      if (lbom) then
+         write(*,'("  >> # Specified basins ... ",a)') trim(charint(veri
+     .fy(charint,' '):7))
+      else if (laom) then
+         write(*,'("  >> # Specified atoms .... ",a)') trim(charint(veri
+     .fy(charint,' '):7))
+         if (iato.LT.nindex) stop ' ** PROBLEM :  The number of atoms is
+     . not enough to perform the calculation'
+      else
+         stop 'AOM/BOM not detected in input file.'
+      endif !! (lbom) then
+      if (allring.AND..NOT.lbom.AND.laom) then 
          write(*,'("  >> Ring detection will be used <<")')
          filex = .TRUE.
          iword = 1
@@ -406,9 +446,10 @@ C >>> Select Atoms          <<<  line 5
       else
          if (lxyz) then
             write(*,'("  >> XYZ files will not be created <<",/,5X,
-     .                              "(ring option is not included)")')
+     .                    "(ring option is not included or disabled)")')
             lxyz = .FALSE.
          endif !! (lxyz) then
+         if (allring) allring = .FALSE.
       endif !! (allring) then 
 C >>> Number of DELOC inds <<<
 C NINDEX     1 - 2 - 3 - 4 - 5 - 6 - 7 - 8 - 9 - 10- 11- 12- 13- 14
@@ -447,6 +488,7 @@ C >>> Read file names (optional) lines 6 ...
       tmpname(:) = ''
       tmpname    = trim(nome(:len(tmpname)))
       if (index(tmpname(1:4),'read').GT.0) then
+         if (lbom) stop 'Option only compatible with AOM. Use mwfn.'
          genint = .FALSE.
          intfuk = .FALSE.
          if (debug) print *,'** atomic overlap matrix files: '
@@ -454,6 +496,7 @@ C >>> Read file names (optional) lines 6 ...
          write(*,'("  >> Files will be read from the input file << ")')
          inpline = inpline + 1
       elseif (index(trim(nome),'int').GT.0) then
+         if (lbom) stop 'Option only compatible with AOM. Use mwfn.'
          inpline = inpline + 1
          genint  = .TRUE.
          intfuk  = .TRUE.
@@ -463,6 +506,7 @@ C >>> Read file names (optional) lines 6 ...
          if (debug) print *,'** input file finished'
          write(*,'("  >> AOM File type ........ ",A)') 'int'
       elseif (index(trim(nome),'aimall').GT.0) then
+         if (lbom) stop 'Option only compatible with AOM. Use mwfn.'
          inpline = inpline + 1
          laimall = .TRUE.
          genint  = .TRUE.
@@ -472,6 +516,7 @@ C >>> Read file names (optional) lines 6 ...
          if (debug) print *,'** input file finished'
          write(*,'("  >> AOM File type ........ ",A)') 'AIMAll int'
       elseif (index(trim(nome),'fuk').GT.0) then
+         if (lbom) stop 'Option only compatible with AOM. Use mwfn.'
          genint = .TRUE.
          intfuk = .FALSE.
          inpline = inpline + 1
@@ -480,6 +525,7 @@ C >>> Read file names (optional) lines 6 ...
          if (debug) print *,'** input file finished'
          write(*,'("  >> AOM File type ........ ",A)') 'fuk'
       elseif (index(trim(nome),'eloc').GT.0) then
+         if (lbom) stop 'Option only compatible with AOM. Use mwfn.'
          genint = .FALSE.
          intfuk = .TRUE.
          inpline = inpline + 1
@@ -488,16 +534,44 @@ C >>> Read file names (optional) lines 6 ...
          if (debug) print *,'** input file finished'
          write(*,'("  >> AOM File type ........ ",A)') 'eloc'
       elseif (index(trim(nome),'mwfn').GT.0) then
-         genint = .FALSE.
-         intfuk = .TRUE.
-         lmwfn  = .TRUE.
+         genint      = .FALSE.
+         intfuk      = .TRUE.
+         lmwfn       = .TRUE.
          lmwfnrdname = .FALSE.
-         if (index(trim(nome),'=read').GT.0) lmwfnrdname = .TRUE.
+         filabom(:)  = ''
+         if (index(trim(nome),'=read').GT.0) then
+            lmwfnrdname = .TRUE.
+            nome(:)     = ''
+            read (iinp,'(A)') nome
+            if(iii.ne.0)stop ' ** PROBLEM while the input file was read'
+            filabom = trim(nome)
+         else if (laom.AND..NOT.lbom) then
+            filabom = 'AOM.txt'
+         else if (.NOT.laom.AND.lbom) then
+            filabom = 'BOM.txt'
+         else
+            stop 'AOM or BOM calculation type not detected'
+         endif !! (index(trim(nome),'=read').GT.0) then
          inpline = inpline + 1
          if (debug) print *,'** atomic overlap matrix files: ',genint,in
      .tfuk
          if (debug) print *,'** input file finished'
-         write(*,'("  >> AOM File type ........ ",A)') 'mwfn'
+         write(*,'("  >> AOM/BOM file type .... ",A)') 'mwfn'
+C          (determine # basins if lbom enabled):
+         if (lbom) then
+            call openfile(filabom ,iom ,debug)
+            text   = 'rlap matrix of basin'
+            nbasin = 0
+            jjj    = 0
+            irw    = 1
+            do while (jjj.EQ.0) 
+               call sudgfchk(text,iom ,icde,irw,jjj,debug)
+                        PRINT *,'jjj=',jjj
+               if (jjj.EQ.0) nbasin = nbasin+1
+            enddo !! while (jjj.EQ.0) 
+            close(iom)
+            if (allatoms) iato = nbasin
+         endif !! (lbom) then
       else
          stop ' ** read,int,eloc,mwfn or fuk were not specified'
       endif !! (index(trim(nome),'int').gt.0) then
@@ -530,20 +604,23 @@ C >>> Read file names (optional) lines 6 ...
       if (debug) print *,'nzeros= ',nzeros
 C +++ ELSE Check if a 2nd argument exists to calculate direct indices +++
       else
-         print *,'NOT IMPLEMENTED'
-         stop
+         stop 'NOT IMPLEMENTED'
       endif
 C >>> Check   data       <<<
-      if (nindex.GT.nat   ) stop ' ** N-(DE)LOC index > NAtoms **'
-      if (nmo   .GT.maxmo ) stop ' ** Increase MAXMO, please **'
-      if (nat   .GT.maxato) stop ' ** Increase MAXATO, please **'
+        PRINT *,nindex,nbasin
+      if (laom.AND.nindex.GT.nat   ) 
+     .                           stop ' ** N-(DE)LOC index > NAtoms  **'
+      if (lbom.AND.nindex.GT.nbasin)
+     .                           stop ' ** N-(DE)LOC index > NBasins **'
+      if (nmo.GT.maxmo ) stop ' ** Increase MAXMO, please **'
+      if (nat.GT.maxato) stop ' ** Increase MAXATO, please **'
 C
       call cpu_time(start)
       call       goon(iwfn,iout,iinp,isom,nmo,nprim,nat,allmo,iato,iint,
      .     allatoms,allheavy,outersh,lpi,npi,lloc,nindex,ndeloc,inpline,
      .version,nheavy,lfchk,bonddist,mxring,allring,genint,intfuk,lgiamb,
      .  runparal,nproc,lsigma,loutsig,imos,ifrmo,ifrag,ixyz,lxyz,nzeros,
-     .                           lmwfnrdname,lmwfn,linear,laimall,debug)
+     .          nbasin,laom,lbom,lmwfnrdname,lmwfn,linear,laimall,debug)
       call cpu_time(finish)
       write(iout,'(/)')
       if (allring) then

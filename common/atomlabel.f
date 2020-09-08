@@ -27,7 +27,7 @@ C***********************************************************************
       if (debug) print *,'In FUNCTION atomlabel:',iato,nato,iq,nzeros,de
      .bug
 C
-      if (iq.LT.1) stop ' ** Z < 1 !! ** '
+      if (iq.LT.0) stop ' ** Z < 1 or not basin !! ** ' !! zero for basins
       rfact = 10.0**nzeros
 c1    if (nato.GE.int(rfact)) then
 c        rfact  = rfact*10.0

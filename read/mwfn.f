@@ -1,11 +1,12 @@
-      subroutine          mwfn(imwfn,nmo,nat,iatt,iatoma ,pop,ss,debug)
+      subroutine          mwfn(imwfn,nmo,nat,laom,lbom,iatt,iatoma ,pop
+     ,                                                        ,ss,debug)
 C
 C Read all necessary data from a AOM.txt file
 C
 C
 C-----------------------------------------------------------------------
       implicit double precision (a-h,o-z)
-      logical      debug
+      logical      debug,laom,lbom
       integer ndimtriang
       character*5  charint
       character*20 text
@@ -23,22 +24,28 @@ C
 C***********************************************************************
 c     rnucchar(0)= 0.0
 C***********************************************************************
-      if (debug) print *,'In SUBROUTINE mwfn:',imwfn,nmo,nat,iatt,iatoma
-     .,'pop,ss',debug
-      if (debug) print *,'                     imwfn,nmo,nat,iatt,iatoma
-     ., pop,ss ,debug'
+      if (debug) print *,'In SUBROUTINE mwfn:',imwfn,nmo,nat,laom,lbom
+     ,,iatt,iatoma,'pop,ss',debug
+      if (debug) print *,'                     imwfn,nmo,nat,laom,lbom
+     ,,iatt,iatoma, pop,ss ,debug'
       rewind(imwfn)
       text(:) = ''
-      text    = 'lap matrix of'
+      if (laom.AND..NOT.lbom) then
+         text    = 'rlap matrix of'
+      else if (.NOT.laom.AND.lbom) then
+         text    = 'atrix of basin'
+      else
+         stop 'AOM/BOM detectation failed'
+      endif !! (laom.AND..NOT.lbom) then
       ii      = len_trim(text)
       nmodim  = nmo*(nmo+1)/2
       do i = 1,iatt
          write(charint,'(I5)') iatoma(i)
-         text = text(:ii)//' '//charint//'('
+         text = text(:ii)//' '//charint
          if (debug) print '("finding +",A,"+")',text
          call sudgfchk(text,imwfn,icde,1,jjj,debug)
-         if (jjj.NE.0) stop ' ** PROBLEM while the atomic overlapping ma
-     .trix was read'
+         if (jjj.NE.0) stop ' ** PROBLEM while the overlap matrix was re
+     .ad'
          call p1fromgauss(imwfn,nmo,arratmp(:nmo*(nmo+1)/2))
 C$omp parallel default(none) shared ( nmo,ss,arratmp,i ) private (j,k)
 C$omp    do
