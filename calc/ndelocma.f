@@ -2,17 +2,27 @@
 C
       subroutine ndelocma(cloc,deloc,giamb,nindex,iperm,ndeloc,nato,
      .    iamat ,bonddist,xx ,yy ,zz ,allring,nmo,matindx,lloc,itmo,moc,
-     .              nproc,icodepar,icolapse,luhf,lgiamb,s ,mxring,debug)
+     .         nproc,icodepar,icolapse,luhf,locc,lgiamb,s ,mxring,debug)
 C
 C I don't use icolapse. Check mulldeloc for good parallelization scheme.
-C Parallelization for 5-atom rings
-C Parallelization for 6-atom rings
+C Parallelization for  2-atom indices
+C Parallelization for  3-atom rings
+C Parallelization for  4-atom rings
+C Parallelization for  5-atom rings
+C Parallelization for  6-atom rings
+C Parallelization for  7-atom rings
+C Parallelization for  8-atom rings
+C Parallelization for  9-atom rings
+C Parallelization for 10-atom rings
+C Parallelization for 11-atom rings
+C Parallelization for 12-atom rings
+C Parallelization for 13-atom rings
+C Parallelization for 14-atom rings
 C-----------------------------------------------------------------------
       implicit real*8 (a-h,o-z)
-      logical        debug,allring,lloc,IFAULT,lgiamb,luhf
+      logical        debug,allring,lloc,IFAULT,lgiamb,luhf,locc
       character*7    charint
       character*25   formato
-      character*100  text
       integer, dimension (:,:), allocatable :: matper
 C
 C=======================================================================
@@ -31,10 +41,10 @@ C=======================================================================
 C
       if (debug) print *,'In SUBROUTINE ndelocma:','cloc,deloc,giamb',ni
      .ndex,iperm,ndeloc,nato,iamat ,bonddist,'xx ,yy zz ',allring,nmo,'m
-     .atindx',lloc,itmo,moc,luhf,lgiamb,'s' ,mxring,debug
+     .atindx',lloc,itmo,moc,luhf,locc,lgiamb,'s' ,mxring,debug
       if (debug) print *,'                          cloc,deloc,giamb ,ni
      .ndex,iperm,ndeloc,nato,iamat ,bonddist, xx ,yy zz  ,allring,nmo, m
-     .atindx ,lloc,itmo,moc,luhf,lgiamb, s  ,mxring,debug'
+     .atindx ,lloc,itmo,moc,luhf,locc,lgiamb, s  ,mxring,debug'
 C
       giamb = 0.0
       deloc = 0.0
@@ -74,8 +84,9 @@ C
          write(*,'(A,A)') "  >> # Permutations ....... ",
      .                              trim(charint(verify(charint,' '):7))
       endif !! (.NOT.lgiamb) then
-      text = ' ** Percent complete for delocalization indices ... '
       allocate(matper(iperm,nindex))    !! Whims of the ifort compiler
+      write(*,'(/,"  >> Computing requested delocalization indices:")')
+      call          showprog(0   ,ndeloc*iperm)
       do idel = 1,ndeloc                                 !!COMBINATIONS
          icodeparb = 1
          if (debug) print *,'>>Deloc index',idel
@@ -84,75 +95,64 @@ C
             matper(1,jc) = matindx(idel,jc)
          enddo !! jc = 2,nindex
 C >>> Giambiagi part  START
-         call       npercent(0   ,ndeloc,text,len(trim(text)))
          idi = 1 
          do jc = 1,nindex
             matnperm(jc) = matper(idi,jc)
          enddo !! jc = 1,nindex
          call       looptree(idi,idel,nato,nmo,ndeloc,iperm,nindex,itmo,
      .                       nproc,icodeparb,matnperm,moc,s,giamb,debug)
-         call          npercent((idel-1)*iperm+1         ,
-     .                                                     ndeloc*iperm,
-     .                                             text,len(trim(text)))
          if (debug) print *,'giamb=',giamb(idel)
 C >>> Giambiagi part  END
 C >>> Ponec     part  START
          if (.NOT.lgiamb) then
-            nprfrag   = 10
             icodeparb = icodepar
             if (nproc.GT.1) nprfrag = nproc
             deloc(idel) = giamb(idel)
             call permut(iperm,nindex,matper)
-C OMP PARALLEL default(none) num_threads(nproc)          
-C OMP&              if(icodeparb.EQ.2)                   
-C OMP&         private(ifrag,idi,jc,matnperm)
-C OMP&          shared(iperm,nprfrag,nindex,idel,nato,nmo,ndeloc,itmo,
-C OMP&                 nproc,icodeparb,matper,moc,s,debug)
-C OMP&       reduction(+:deloc)
+            icount = 2
+C$OMP PARALLEL default(none) num_threads(nproc)          
+C$OMP&              if(icodeparb.EQ.2)                   
+C$OMP&         private(ifrag,idi,jc,matnperm)
+C$OMP&          shared(iperm,nprfrag,nindex,idel,nato,nmo,ndeloc,itmo,
+C$OMP&                 nproc,icodeparb,matper,moc,s,debug,icount)
+C$OMP&       reduction(+:deloc)
 C
-C OMP DO
-            do ifrag = 1,(iperm-1)/nprfrag
-               do idi = 2+(ifrag-1)*nprfrag,ifrag*nprfrag+1
-C                                                        !!PERMUTATIONS
-                  do jc = 1,nindex
-                     matnperm(jc) = matper(idi,jc)
-                  enddo !! jc = 1,nindex
-               call looptree(idi,idel,nato,nmo,ndeloc,iperm,nindex,itmo,
-     .                       nproc,icodeparb,matnperm,moc,s,deloc,debug)
-               enddo !! idi = 2+(ifrag-1)*nprfrag,ifrag*nprfrag+1
-               call    npercent((idel-1)*iperm+ifrag*nprfrag+1,
-     .                                                     ndeloc*iperm,
-     .                                             text,len(trim(text)))
-            enddo !! ifrag = 1,(iperm-1)/nprfrag
-C OMP END DO
-C
-C OMP DO
-            do idi = ((iperm-1)/nprfrag)*nprfrag+2,
-     .                ((iperm-1)/nprfrag)*nprfrag+mod(iperm-1,nprfrag)+1
+C$OMP DO
+            do idi = 2,iperm   !!  !!PERMUTATIONS
+               call showprog(
+     .                          (idel-1)*iperm+icount-1
+     ,,                         ndeloc*iperm
+     .                      )
                do jc = 1,nindex
                   matnperm(jc) = matper(idi,jc)
                enddo !! jc = 1,nindex
                call looptree(idi,idel,nato,nmo,ndeloc,iperm,nindex,itmo,
      .                       nproc,icodeparb,matnperm,moc,s,deloc,debug)
-            enddo !! idi = ifrag*10+1,ifrag*10+mod(iperm,10)
-C OMP END DO
-C OMP END PARALLEL
+               icount = icount+1
+            enddo !! idi = 2,iperm   !!  !!PERMUTATIONS
+C$OMP END DO
+C$OMP END PARALLEL
          endif !! (.NOT.lgiamb) then
 C >>> Ponec     part  END
-         call          npercent( idel                    ,
-     .                                                     ndeloc      ,
-     .                                             text,len(trim(text)))
+         call       showprog(
+     .                          idel
+     ,,                         ndeloc
+     .   )
       enddo !! idel = 1,ndeloc                           !!COMBINATIONS
 C ++++++ DELOC LOOPS END
 C ++++++        PART OF LOC INDICES
-      if (lloc) then
-         text = ' ** Percent complete for localization indices ... '
+      if (lloc) then !! Paralelización?
          idi   = 1
+         write(*,'(/,"  >> Computing requested localization indices: ")'
+     .        )
          do iaa = 1,nato
             matnperm = iaa
             call    looptree(idi,iaa ,nato,nmo,nato  ,iperm,nindex,itmo,
      .                       nproc,icodeparb,matnperm,moc,s,cloc ,debug)
-            call    npercent(iaa ,nato  ,text,len(trim(text)))
+            call showprog(
+     .                          iaa
+     ,,                         nato
+     .                   )
          enddo !! iaa = 1,nato
       endif !! (lloc) then
       write(*,'(/)')
@@ -160,9 +160,15 @@ C ++++++        PART OF LOC INDICES END
 C
       deloc = deloc*nindex
       if (.NOT.luhf) then
+C$OMP PARALLEL default(none) num_threads(nproc)          
+C$OMP&          shared(deloc,cloc,giamb)
+C$OMP WORKSHARE
+         giamb = giamb*2
          deloc = deloc*2
           cloc =  cloc*2
-      endif !! (.NOT.luhf) then
+C$OMP END WORKSHARE
+C$OMP END PARALLEL
+      endif !! (.NOT.luhf..AND..NOT.locc) then
 C
 C ++++++  >>> DEBUG
       if (debug) then

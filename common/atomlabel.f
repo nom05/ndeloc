@@ -34,8 +34,8 @@ c        rfact  = rfact*10.0
 c        nzeros = nzeros+1
 c        goto 1
 c     endif !! (nato.GE.int(rfact)) then
-      atomlabel = '               '
-      numero    = '               '
+      atomlabel(:) = ''
+      numero(:)    = ''
       write(charint,'(I7)') nzeros+2
       formatnu  = '(F'//trim(charint(verify(charint,' '):7))
       write(charint,'(I7)') nzeros

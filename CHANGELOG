@@ -39,3 +39,10 @@ C               - OpenMP parallelization according to mulldeloc scheme.
 C               - Main CMakelist.txt updated.
 C *** 1.2.13 ** - Support for Multiwfn atomic overlap matrices with Multiwfn (AOM.txt)
 C *** 1.2.14 ** - Support for Multiwfn basin overlap matrices with Multiwfn (BOM.txt)
+C *** 1.2.15 ** - Use of occupation numbers to scale overlap matrices. Put parallelization in low indices.
+C 		- AIMAll int file names are automatically generated.
+C               - looptree expanded up to 14-deloc indices.
+C               - Parallelization revised.
+C               - 'debug' mode can be set from the 1st input line adding the word 'debug'
+C               - Bug fixes.
+C 		- New progress bar.

@@ -33,7 +33,7 @@ C
          text = 'SIGMA respecto al '//textito(1:2)
       endif !! (lpi) then
       do i = 1,npi
-            call sudgfchk(text,isom,icde,1,jjj,debug)
+            call sudgfchk(text,20,isom,icde,1,jjj,debug)
             if (jjj.EQ.0) then
                backspace(isom)
                read (isom,'(3X,I3)') moc(i)

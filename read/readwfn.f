@@ -1,11 +1,11 @@
       subroutine readwfn(iwfn,nmo,nprim,nat,debug,xx,yy,zz,nheavy,iq,
-     .                                                      iheavy,luhf)
+     .                                          pel,iheavy,luhf,lpostHF)
 C
 C Read wfn file
 C
 C-----------------------------------------------------------------------
       implicit real*8 (a-h,o-z)
-      logical     debug,luhf
+      logical     debug,luhf,lpostHF
       character*10 codigo
 C
 C----------------------------------------------------------------------
@@ -20,12 +20,13 @@ C
       dimension eom(nmo)
       dimension c(nmo,nprim)
 C***********************************************************************
-      luhf = .FALSE.
+      luhf    = .FALSE.
+      lpostHF = .FALSE.!! Post-HF method (occ. numbers are not integers)
 C***********************************************************************
       if (debug) print *,'In SUBROUTINE readwfn :',iwfn,nmo,nprim,debug,
-     .'xx,yy,zz',nheavy,'iq,iheavy',luhf,'ic,it,ex,pel,c'
+     .'xx,yy,zz',nheavy,'iq,iheavy',luhf,'ic,it,ex,pel,c',lpostHF
       if (debug) print *,'                         iwfn,nmo,nprim,debug,
-     . xx,yy,zz ,nheavy, iq,iheavy ,luhf, ic,it,ex,pel,c'
+     . xx,yy,zz ,nheavy, iq,iheavy ,luhf, ic,it,ex,pel,c,lpostHF'
 C
       rewind(iwfn)
 C >>> NMO,NPRIM,NAT      <<<
@@ -70,11 +71,21 @@ c        read(iwfn,'(34X,F13.7)',err=52,end=52) pel(j)
       if (debug) print '(/,a,F9.3)','last occup numb=',pel(nmo)
 C >>> Detect UHF
       if (nint(pel(1)).NE.2) then
-         luhf=.TRUE.
-         ialfa=int(nmo/2)+1
+         luhf  = .TRUE.
+         ialfa = 1
+         if (nmo.GT.1) then
+            do i = 2,nmo
+               if (eom(i).LT.eom(i-1)) exit
+            enddo !! i = 2,nmo
+            ialfa=i-1
+         endif !! (nmo.GT.1) then
          if (debug) write (*,'(10X,"UHF calc. ORB. E(n_alpha)=",F11.6,5
      .X,"ORB. E(n_alpha+1)=",F11.6)') eom(ialfa),eom(ialfa+1)
       endif
+C >>> Detect Multideterminant wf
+      lpostHF = any(ceiling(pel).GT.floor(pel))
+      if (debug) PRINT *,'lpostHF(any(ceiling(pel).GT.floor(pel)))='
+     ,                                                          ,lpostHF
 C >>> El E, virial        <<<
       read (iwfn,'(/,a)') codigo
       backspace(iwfn)

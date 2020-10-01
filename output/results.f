@@ -1,15 +1,16 @@
 C-----------------------------------------------------------------------
       subroutine results(iout,nmo,nprim,nheavy,cloc,deloc,nindex,ndeloc,
      . iato,iatomat,nato,iq,matindx,atoms,filint,allmo,outersh,lpi,lloc,
-     .    giamb,lgiamb,version,itmo,lfchk,bonddist,allring,ntotdel,luhf,
+     .    giamb,lgiamb,version,itmo,itype,bonddist,allring,ntotdel,luhf,
      . loutsig,lsigma,genint,intfuk,moc,ixyz,lxyz,xx,yy,zz,xyzgc,nzeros,
-     .                                    nbasin,laom,lbom,linear,debug)
+     .                       locc,lpostHF,nbasin,laom,lbom,linear,debug)
 C
 C-----------------------------------------------------------------------
       implicit double precision (a-h,o-z)
-      logical        debug,lloc,allmo,lpi,outersh,allring,lfchk,lgiamb,
-     .               lsigma,loutsig,linear,laom,lbom
+      logical        debug,lloc,allmo,lpi,outersh,allring,lgiamb,
+     .               lsigma,loutsig,linear,laom,lbom,locc,lpostHF
       logical        luhf,lxyz,genint,intfuk
+      integer        itype !! =0 wfn, =1 fchk, =2 molden
       character*3    aombom
       character*7    charint,charintd,atoms,version
       character*15   charreal,atomlabel
@@ -42,16 +43,16 @@ C***********************************************************************
       if (debug) print *,'In SUBROUTINE results:',iout,nmo,nprim,nheavy,
      .cloc,deloc,nindex,ndeloc,iato,'iatomat',nato,iq,'matindx',trim(ato
      .ms(1)),trim(filint(1)),allmo,outersh,lpi,lloc,giamb,lgiamb,version
-     .,itmo,lfchk,bonddist,allring,ntotdel,luhf,loutsig,lsigma,genint,in
-     .tfuk,'moc',ixyz,lxyz,'xx,yy,zz,xyzgc',nzeros,nbasin,laom,lbom,line
-     .ar,debug
+     .,itmo,itype,bonddist,allring,ntotdel,luhf,lpostHF,loutsig,lsigma,g
+     .enint,intfuk,'moc',ixyz,lxyz,'xx,yy,zz,xyzgc',nzeros,nbasin,laom,l
+     .bom,linear,debug
 
       if (debug) print *,'                        iout,nmo,nprim,nheavy,
      .cloc,deloc,nindex,ndeloc,iato, iatomat ,nato,iq, matindx ,     ato
      .ms(1) ,     filint(1) ,allmo,outersh,lpi,lloc,giamb,lgiamb,version
-     .,itmo,lfchk,bonddist,allring,ntotdel,luhf,loutsig,lsigma,genint,in
-     .tfuk, moc ,ixyz,lxyz, xx,yy,zz,xyzgc ,nzeros,nbasin,laom,lbom,line
-     .ar,debug'
+     .,itmo,itype,bonddist,allring,ntotdel,luhf,lpostHF,loutsig,lsigma,g
+     .enint,intfuk, moc ,ixyz,lxyz, xx,yy,zz,xyzgc ,nzeros,nbasin,laom,l
+     .bom,linear,debug'
 C >>> Open output file
       open(unit=iout,file=filout,status='unknown',form='formatted')
 C >>> HEADER <<<
@@ -69,15 +70,32 @@ C >>> HEADER <<<
 C >>> SUMMARY <<<
       write(iout,'(2(/),3X,">> SUMMARY :",/        )')
       write(iout,'(     5X,"* INPUT file ............ ",a)')trim(filinp)
-      if (lfchk) then
-         write(iout,'(     5X,"* FCHK  file ............ ",a)')
+      select case(itype)
+        case(0)
+          write(iout,'(     5X,"* WFN   file ............ ",a)')
      .                                                      trim(filwfn)
-         write(iout,'(     5X,"* NMO,NBFUNC,NAtoms ..... ",$)')
-      else
-         write(iout,'(     5X,"* WFN   file ............ ",a)')
+          write(iout,'(     5X,"* Wave function type .... ",$)')
+          if (lpostHF) then
+             write(iout,'(A)') 'post-HF or 2hybrid-KS'
+          else
+             write(iout,'(A)') 'HF/KS'
+          endif !! (lpostHF) then
+          write(iout,'(     5X,"* NMO,NPRIMS,NAtoms ..... ",$)')
+        case(1)
+          write(iout,'(     5X,"* FCHK   file ........... ",a)')
      .                                                      trim(filwfn)
-         write(iout,'(     5X,"* NMO,NPRIMS,NAtoms ..... ",$)')
-      endif !! (lfchk) then
+          write(iout,'(     5X,"* NMO,NBFUNC,NAtoms ..... ",$)')
+        case(2)
+          write(iout,'(     5X,"* MOLDEN file ........... ",a)')
+     .                                                      trim(filwfn)
+          write(iout,'(     5X,"* Wave function type .... ",$)')
+          if (lpostHF) then
+             write(iout,'(A)') 'post-HF or 2hybrid-KS'
+          else
+             write(iout,'(A)') 'HF/KS'
+          endif !! (lpostHF) then
+          write(iout,'(     5X,"* NMO,NPRIMS,NAtoms ..... ",$)')
+      end select !! case(itype)
       write(charintd,'(I7)') nmo
       write(iout,'(a,", ",$)') trim(charintd(verify(charintd,' '):7))
       write(charintd,'(I7)') nprim
@@ -92,41 +110,45 @@ C >>> SUMMARY <<<
       write(charintd,'(I7)') nheavy
       write(iout,'(     5X,"* # Heavy atoms ......... ",a)') 
      .                            trim(charintd(verify(charintd,' '):7))
+!!!!!!!!!!!!!!!! O R B I T A L S !!!!!!!!!!!!!!!
       write(iout,'(     5X,"* Specified orbitals .... ",$)') 
+      call       prepnumb(itmo,moc    ,nome,debug)
       if (allmo)       then
-         write(iout,'(a)') 'ALL'
+         write(iout,'(A,$)') trim(nome)
+         write(charintd,'(I7)') itmo
+         write(iout,'(X,A,A,A)')
+     .                 'ALL(',trim(charintd(verify(charintd,' '):7)),')'
       elseif (lpi)     then
-         call       prepnumb(itmo,moc    ,nome,debug)
          write(iout,'(A,$)') trim(nome)
          write(charintd,'(I7)') itmo
          write(iout,'(X,A,A,A)')
      .                  'PI(',trim(charintd(verify(charintd,' '):7)),')'
       elseif (lsigma)  then
-         call       prepnumb(itmo,moc    ,nome,debug)
          write(iout,'(A,$)') trim(nome)
          write(charintd,'(I7)') itmo
          write(iout,'(X,A,A,A)')
      .               'SIGMA(',trim(charintd(verify(charintd,' '):7)),')'
       elseif (outersh) then
-         call       prepnumb(itmo,moc    ,nome,debug)
          write(iout,'(A,$)') trim(nome)
          write(charintd,'(I7)') itmo
          write(iout,'(X,"(",A,")",A)')
      .                           trim(charintd(verify(charintd,' '):7)),
      .                                  ' (inner s shells were omitted)'
       elseif (loutsig) then
-         call       prepnumb(itmo,moc    ,nome,debug)
          write(iout,'(A,$)') trim(nome)
          write(charintd,'(I7)') itmo
          write(iout,'(X,A,A,A)')
      .         'OUTER SIGMA(',trim(charintd(verify(charintd,' '):7)),')'
       else
-         call       prepnumb(itmo,moc    ,nome,debug)
          write(iout,'(A,$)') trim(nome)
          write(charint,'(I7)' ) itmo
          write(iout,'(X,"(",A,")")')trim(charint(verify(charint,' '):7))
       endif !! (allmo) then
+      if (lpostHF) write(iout,'(    5X,"* PostHF automatic orbital trunc
+     .. by null occ. numbers *")')
       if (linear) write(iout,'(     5X,"* Linear molecule *")')
+      if (locc)   write(iout,'(     5X,"* Occupation numbers used to sca
+     .le overlap matrices *")')
       write(iout,'(     5X,"* (DE)LOC index order ... ",a)')
      .                              trim(charint(verify(charint,' '):7))
       if (lloc) then

@@ -1,23 +1,26 @@
           write(*,'(
      ."  INPUT file HELP/TIPS:",/
      ."      ( * = possible options in the corresponding line )"      ,/
-     ."     o Line 1 :  WFN/FCHK file with extension + # threads"     ,/
+     ."     o Line 1 :  WFN/FCHK file with extension+# threads+debug" ,/
      ."              *  file   -> File with extension:"               ,/
      ."                         > wfn  reading algorithm to be used." ,/
      ."                         > fchk reading algorithm to be used." ,/
      ."              *  # threads to be used through OpenMP."         ,/
+     ."              *  debug  -> debug mode is set."                 ,/
      ."     o Line 2 :  OUTPUT          specification:"               ,/
      ."              *  text   -> file without extension."            ,/
      ."              *  xyz    -> print xyz with the N-DELOC indices" ,/
      ."                           (if ring is specified)"             ,/
      ."                           (only for Chemcraft)"               ,/
-     ."     o Line 3 :  MO              specification:"               ,/
+     ."     o Line 3 :  MO + occ        specification:"               ,/
      ."              *  all    -> All mol orbitals included."         ,/
      ."              *  pi     -> All PI mol orbitals included."      ,/
      ."              *  outersh-> Inner s shell not included."        ,/
      ."              *  1,3-5  -> Numbering specif. will be"          ,/
      ."                           considered separated by comma or"   ,/
      ."                           dash (this example: 1,3,4,5)."      ,/
+     ."              *  occ    -> Occupation numbers will be used to" ,/
+     ."                           scale multidet. overl. matrices."   ,/
      ."     o Line 4 :  N-(DE)LOC index specification and overlap "   ,/
      ."                 matrix type:"                                 ,/
      ."              *  integer-> N-(DE)LOC index order."             ,/

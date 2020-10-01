@@ -18,7 +18,7 @@ C=======================================================================
 C
       result = 0.
 C$OMP PARALLEL DO default(none) num_threads(nproc)
-C OMP&                 if(icodepar.EQ.1)
+C$OMP&                 if(icodepar.EQ.1)
 C$OMP&            private(iom,jom,kom,lom,mom,nom)
 C$OMP&             shared(itmo,s,matper,moc)
 C$OMP&          reduction(+:result)

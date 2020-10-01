@@ -35,7 +35,7 @@ C >> Read if the calc is R or U     <<
       if (debug) print *,' ** UHF calc: ',luhf,'**'
 C >> Number of atoms/Detect # Z > 1 <<
       text = 'Atomic numbers      '
-      call sudgfchk(text,ifch ,iok,0,jjj,debug)
+      call sudgfchk(text,20,ifch ,iok,0,jjj,debug)
       if (iok.eq.1) then
          read (ifch,'(6I12)',iostat=iii) (iq(j),j=1,nat)
          if (iii.ne.0) stop ' ** PROBLEM while the fchk  file was read'
@@ -55,7 +55,7 @@ C >> Number of atoms/Detect # Z > 1 <<
       if(nhebac.NE.nheavy) stop ' ** PROBLEM WITH HEAVY ATOMS DETECTION'
 C >> Cartesian coordinates          <<
       text = 'Current cartesian co'
-      call sudgfchk(text,ifch ,iok,0,jjj,debug)
+      call sudgfchk(text,20,ifch ,iok,0,jjj,debug)
       if (iok.eq.1) then
          read (ifch,'(5E16.8)',iostat=iii) (xx(j),yy(j),zz(j),j=1,nat)
          if (iii.ne.0) stop ' ** PROBLEM while the fchk  file was read'

@@ -1,11 +1,11 @@
 !23456789 123456789 123456789 123456789 123456789 123456789 123456789 12
 C
       subroutine ndeloc2(cloc,deloc,ndeloc,nato,iamat  ,nmo,itmo,moc,s ,
-     .                                                 nproc,luhf,debug)
+     .                                            nproc,luhf,locc,debug)
 C
 C-----------------------------------------------------------------------
       implicit real*8 (a-h,o-z)
-      logical        debug,luhf
+      logical        debug,luhf,locc
 C
 C=======================================================================
 C
@@ -17,9 +17,9 @@ C
 C=======================================================================
 C
       if (debug) print *,'In SUBROUTINE ndeloc2:','cloc',' deloc',ndeloc
-     .,nato,iamat(nato),nmo,itmo,moc(itmo),'s',nproc,luhf,debug
+     .,nato,iamat(nato),nmo,itmo,moc(itmo),'s',nproc,luhf,locc,debug
       if (debug) print *,'                         cloc ,  deloc ,ndeloc
-     .,nato,iamat(nato),nmo,itmo,moc(itmo), s ,nproc,luhf,debug'
+     .,nato,iamat(nato),nmo,itmo,moc(itmo), s ,nproc,luhf,locc,debug'
 C
       iac = 0
       f   = 0.0
@@ -27,7 +27,7 @@ C
       do iat = 1,nato
 C$OMP PARALLEL DO DEFAULT(none) NUM_THREADS(nproc)
 C$OMP&                        PRIVATE(jat,iom,jom)
-C$OMP&                SHARED(iat,luhf,nato,itmo,s)
+C$OMP&           SHARED(iat,luhf,nato,itmo,s,locc)
 C$OMP&                              REDUCTION(+:f)
          do jat = iat,nato
             do iom = 1,itmo
@@ -36,8 +36,8 @@ C$OMP&                              REDUCTION(+:f)
      .                                   *s(jat,moc(iom),moc(jom))
                enddo !! jom = 1,itmo
             enddo !! iom = 1,itmo
-            f(iat,jat) = f(iat,jat)*4
-            if (luhf) f(iat,jat) = f(iat,jat)/2
+            f(iat,jat) = f(iat,jat)*2
+            if (.NOT.luhf) f(iat,jat) = f(iat,jat)*2
             f(jat,iat) = f(iat,jat)
          enddo !! jat = iat,nato
 C$OMP END PARALLEL DO

@@ -30,7 +30,7 @@ C >> Determine R/U <<
       endif
 C >> Number of basis func <<
       text = 'Number of basis func'
-      call sudgfchk(text,ifchk,iok,0,jjj,debug)
+      call sudgfchk(text,20,ifchk,iok,0,jjj,debug)
       if (iok.eq.1) then
          backspace(ifchk)
          read (ifchk,'(49X,I12)') nfunc
@@ -39,7 +39,7 @@ C >> Number of basis func <<
       endif
 C >> Number of atoms/Detect # Z > 1 <<
       text = 'Atomic numbers      '
-      call sudgfchk(text,ifchk,iok,0,jjj,debug)
+      call sudgfchk(text,20,ifchk,iok,0,jjj,debug)
       if (iok.eq.1) then
          backspace(ifchk)
          read (ifchk,'(49X,I12)') nat
@@ -62,7 +62,7 @@ C >> Number of atoms/Detect # Z > 1 <<
       endif
 C >> Number of electrons <<
       text = 'Number of electrons '
-      call sudgfchk(text,ifchk,iok,0,jjj,debug)
+      call sudgfchk(text,20,ifchk,iok,0,jjj,debug)
       if (iok.eq.1) then
          backspace(ifchk)
          read (ifchk,'(49X,I12)') nmo

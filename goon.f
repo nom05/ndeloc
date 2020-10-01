@@ -2,29 +2,34 @@ C-----------------------------------------------------------------------
 C
       subroutine goon(iwfn,iout,iinp,isom,nmo,nprim,nat,allmo,iato,iint,
      .     allatoms,allheavy,outersh,lpi,npi,lloc,nindex,ndeloc,inpline,
-     .version,nheavy,lfchk,bonddist,mxring,allring,genint,intfuk,lgiamb,
+     .version,nheavy,itype,bonddist,mxring,allring,genint,intfuk,lgiamb,
      .  runparal,nproc,lsigma,loutsig,imos,ifrmo,ifrag,ixyz,lxyz,nzeros,
-     .          nbasin,laom,lbom,lmwfnrdname,lmwfn,linear,laimall,debug)
+     .           locc,nbasin,laom,lbom,lmwfnrdname,lmwfn,linear,laimall,
+     .                                         lpostHF,moldentype,debug)
 C
 C-----------------------------------------------------------------------
       implicit double precision (a-h,o-z)
-      logical        debug,filex,lloc,lfchk,luhf,lxyz
+      logical        debug,filex,lloc,luhf,lxyz,lpostHF,runparal
       logical        genint,intfuk,laimall,lmwfn,lmwfnrdname
-      logical        allmo,lpi,outersh,lsigma,loutsig,linear
+      logical        allmo,lpi,outersh,lsigma,loutsig,linear,locc
       logical        allatoms,allheavy,allring,lgiamb,laom,lbom
+      integer        itype !! =0 wfn, =1 fchk, =2 molden
       character*3    atemp
       character*7    atoms,version,charint
       character*15   charreal,atomlabel
       character*100  filint
       character*100  filwfn,filinp,filout,filw,filsom,command,filouw
       character*1000 nome
-      real*8, dimension (:,:),   allocatable :: xyzgc
+      integer,dimension (:)    , allocatable :: mocred
+      real*8, dimension (:)    , allocatable :: pel
+      real*8, dimension (:,:)  , allocatable :: xyzgc
       real*8, dimension (:,:,:), allocatable :: ss  !! Intel compiler quirks??
 C
 C----------------------------------------------------------------------
       common /names/  filwfn,filinp,filout,filw,filsom,filouw
 C----------------------------------------------------------------------
       include 'cnstants.h' !! Constants
+      include 'elements.h'
 C----------------------------------------------------------------------
 C
 !23456789 123456789 123456789 123456789 123456789 123456789 123456789 12
@@ -48,24 +53,32 @@ C***********************************************************************
 c     lloc = .FALSE.
 C***********************************************************************
       if (debug) print *,'In SUBROUTINE goon :',iwfn,iout,iinp,isom,nmo,
-     .nprim,nat,allmo,iato,iint,allatoms,allheavy,outersh,lpi,npi,lloc,n
-     .index,ndeloc,inpline,nheavy,lfchk,bonddist,mxring,allring,genint,i
-     .ntfuk,runparal,nproc,lsigma,loutsig,imos,ifrmo,ifrag,ixyz,lxyz,nze
-     .ros,laimall,nbasin,laom,lbom,lmwfnrdname,lmwfn,linear,debug
+     .nprim,nat,allmo,iato,iint,allatoms,allheavy,outersh,lpi,npi,locc,l
+     .loc,nindex,ndeloc,inpline,nheavy,itype,bonddist,mxring,allring,gen
+     .int,intfuk,runparal,nproc,lsigma,loutsig,imos,ifrmo,ifrag,ixyz,lxy
+     .z,nzeros,laimall,nbasin,laom,lbom,lmwfnrdname,lmwfn,linear,lpostHF
+     .,moldentype,debug
       if (debug) print *,'                      iwfn,iout,iinp,isom,nmo,
-     .nprim,nat,allmo,iato,iint,allatoms,allheavy,outersh,lpi,npi,lloc,n
-     .index,ndeloc,inpline,nheavy,lfchk,bonddist,mxring,allring,genint,i
-     .ntfuk,runparal,nproc,lsigma,loutsig,imos,ifrmo,ifrag,ixyz,lxyz,nze
-     .ros,laimall,nbasin,laom,lbom,lmwfnrdname,lmwfn,linear,debug'
+     .nprim,nat,allmo,iato,iint,allatoms,allheavy,outersh,lpi,npi,locc,l
+     .loc,nindex,ndeloc,inpline,nheavy,itype,bonddist,mxring,allring,gen
+     .int,intfuk,runparal,nproc,lsigma,loutsig,imos,ifrmo,ifrag,ixyz,lxy
+     .z,nzeros,laimall,nbasin,laom,lbom,lmwfnrdname,lmwfn,linear,lpostHF
+     .,moldentype,debug'
 C
-C >>> Read wfn file      <<<
-      if (lfchk) then
-         call    readfch(iwfn,nmo,nprim,nat,debug,xx,yy,zz,nheavy,iq,
+C >>> Read wavefunction file   <<<
+      select case(itype)
+        case(0)
+          allocate(pel(nmo))
+          call    readwfn(iwfn,nmo,nprim,nat,debug,xx,yy,zz,nheavy,iq,
+     .                                          pel,iheavy,luhf,lpostHF)
+        case(1)
+          call    readfch(iwfn,nmo,nprim,nat,debug,xx,yy,zz,nheavy,iq,
      .                                                      luhf,iheavy)
-      else
-         call    readwfn(iwfn,nmo,nprim,nat,debug,xx,yy,zz,nheavy,iq,
-     .                                                      iheavy,luhf)
-      endif !! (lfchk) then
+        case(2)
+          allocate(pel(nmo))
+          call   readmold(iwfn,moldentype,nmo,nprim,nat,debug,xx,yy,zz,
+     .                                nheavy,iq,pel,iheavy,luhf,lpostHF)
+      end select !! case(itype)
 C >>> Read  atom/basin matrix  <<<
       rewind(iinp)
       if (.NOT.allatoms.AND..NOT.allheavy) then
@@ -127,7 +140,7 @@ C >>> Atom labels        <<<
          atoms(i) = atomlabel(iatomat(i),nat ,iq(iatomat(i)),nzeros
      .                                                           ,debug)
       enddo !! i = 1,iato
-C >>> Read at ov matrix  <<<
+C >>> Read over. matrix  <<<
       allocate(ss(iato,nmo,nmo))
       if (.NOT.genint.AND..NOT.intfuk) then        !! >>>>>>>>>>>>> READ
          do i = 1,iato
@@ -176,18 +189,31 @@ c    .:15))
 c              enddo !! i = 1,iato
       elseif (genint.AND.intfuk) then               !! >>>>>>>>>>>>> INT
             do i = 1,iato
-               filint(i) = trim(filw)//'_'//trim(atoms(i))//'.int'
-               call       openfile(filint(i),iint,debug)
                if (laimall) then
+                 charreal(:) = ''
+                 charint(:)  = ''
+                 charreal    = trim(elem(iq(iatomat(i))))
+                 do j = 1,len_trim(charreal) !! LOWERCASE
+                    jj            = ichar(charreal(j:j))
+                    if (jj.GE.65.AND.jj.LE.91) jj = jj + 32
+                    charreal(j:j) = char(jj)
+                 enddo !! j = 1,len_trim(charreal)
+                 write(charint,'(I7)') iatomat(i)
+                 filint(i) = trim(charreal)
+     .                    // trim(charint(verify(charint,' '):7))
+     .                    //'.int'
+                 call     openfile(filint(i),iint,debug)
                  if (debug) print *,' ;;;>>> AIMAll FORMAT ***'
                  call atovmall(iint,nmo,nprim,nat,i  ,iato,pop,ss,debug)
                else
+                 filint(i) = trim(filw)//'_'//trim(atoms(i))//'.int'
+                 call     openfile(filint(i),iint,debug)
                  if (debug) print *,' ;;;>>> AIMPAC FORMAT ***'
                  call atomovma(iint,nmo,nprim,nat,i  ,iato,pop,ss,2    ,
      .                                                            debug)
                endif !! (laimall) then
                close(iint)
-               write(charreal,'(F6.2)') pop(i)
+              write(charreal,'(F6.2)') pop(i)
                write(*,'(1X,a,$)') trim(charreal(verify(charreal,' '):15
      .))
             enddo !! i = 1,iato
@@ -205,6 +231,9 @@ c              enddo !! i = 1,iato
             enddo !! i = 1,iato
       endif !! (.NOT.genint.AND..NOT.intfuk) then
       write(*,'(/)')
+C >>> Scale overlap matrices if required<<<
+      if (locc.AND.allocated(pel)) 
+     +                           call scaleovermat(luhf,nmo,iato,pel,ss)
 C >>> Choose MOs for calc<<<
       if (allmo)       then
          if (debug) print *,'** ALL   MOL ORBS **'
@@ -226,6 +255,7 @@ C >>> Choose MOs for calc<<<
          do i = 1,imo
             moc(i) = nheavy+i
          enddo !! i = nheavy+1,nmo
+         if (lpostHF) imo = imo-nheavy
       elseif (loutsig) then
          if (debug) print *,'** OUTER SIGMA MOL ORBS **'
          imo = npi
@@ -246,6 +276,24 @@ C >>> Choose MOs for calc<<<
       endif !! (allmo) then
       if (debug) print '("Specified MOs=",25I4)',(moc(i),i=1,imo)
       if (debug) print '("Total #   MOs=",  I4)',imo
+C >> IF lpostHF, reduce set of MOs if null occ. numbers
+      if (lpostHF) then
+         allocate(mocred(imo))
+         j = 0
+         do i = 1,imo
+            if (pel(moc(i)).NE.0.) then
+               j = j+1
+               mocred(j) = moc(i)
+            endif !! (pel(moc(i)).NE.0.) then
+         enddo !! i = 1,imo
+         moc(:j) = mocred(:j)
+         imo = j
+         deallocate(mocred)
+         if (debug) then
+            PRINT '("New truncated MO set=",25I4)',(moc(i),i=1,imo)
+            PRINT '("Total new # MOs=",I4)',imo
+         endif !! (debug) then
+      endif !! (lpostHF) then
 C >>> Parallelization strategy<<<
       call       strategy(nindex ,nproc,runparal,imo,icodepar,icolapse,
      .                                                      iperm,debug)
@@ -261,7 +309,7 @@ C                                             IT PRINTS ">> NOT IMPLEMENTED <<"
 C
  102  continue
       call       ndeloc2(cloc,deloc,ndeloc,iato,iatomat,nmo,imo ,moc,ss,
-     .                                                 nproc,luhf,debug)
+     .                                            nproc,luhf,locc,debug)
       goto 100
 C
       else
@@ -274,7 +322,7 @@ C
          if (debug) print *,'iperm=',iperm
          call    ndelocma(cloc,deloc,giamb,nindex,iperm,ndeloc,iato,
      .   iatomat,bonddist,xxr,yyr,zzr,allring,nmo,matindx,lloc,imo ,moc,
-     .              nproc,icodepar,icolapse,luhf,lgiamb,ss,mxring,debug)
+     .         nproc,icodepar,icolapse,luhf,locc,lgiamb,ss,mxring,debug)
       endif !! (nindex.LT.3) then
 C
  100  continue
@@ -307,10 +355,12 @@ cc    enddo !! i = 1,iato        !! >> ATOM LABELS
 C
       call       results(iout,nmo,nprim,nheavy,cloc,deloc,nindex,ndeloc,
      . iato,iatomat,nat ,iq,matindx,atoms,filint,allmo,outersh,lpi,lloc,
-     .    giamb,lgiamb,version,imo ,lfchk,bonddist,allring,ntotdel,luhf,
+     .    giamb,lgiamb,version,imo ,itype,bonddist,allring,ntotdel,luhf,
      . loutsig,lsigma,genint,intfuk,moc,ixyz,lxyz,xx,yy,zz,xyzgc,nzeros,
-     .                                    nbasin,laom,lbom,linear,debug)
-      deallocate(xyzgc,ss)
+     .                       locc,lpostHF,nbasin,laom,lbom,linear,debug)
+      if (allocated(xyzgc)) deallocate(xyzgc)
+      if (allocated(ss)   ) deallocate(ss)
+      if (allocated(pel)  ) deallocate(pel)
       write(*,'(" Done")') 
 C
       if (debug) print *,'***** END *** goon ***'

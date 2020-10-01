@@ -43,7 +43,7 @@ C***********************************************************************
          write(charint,'(I5)') iatoma(i)
          text = text(:ii)//' '//charint
          if (debug) print '("finding +",A,"+")',text
-         call sudgfchk(text,imwfn,icde,1,jjj,debug)
+         call sudgfchk(text,20,imwfn,icde,1,jjj,debug)
          if (jjj.NE.0) stop ' ** PROBLEM while the overlap matrix was re
      .ad'
          call p1fromgauss(imwfn,nmo,arratmp(:nmo*(nmo+1)/2))

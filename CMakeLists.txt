@@ -72,6 +72,7 @@ add_subdirectory(calc)
 set(clc calc)
 set (CALC
     ${clc}/ndelocma.f
+    ${clc}/scaleovermat.f90
 )
 ### >> COMBINATORICS     subrout. << ##
 add_subdirectory(combinatorics)
@@ -91,10 +92,10 @@ set (COMMON
     ${cmm}/calcdist.f
     ${cmm}/hmnumb.f
     ${cmm}/ncolumn.f
-    ${cmm}/npercent.f
     ${cmm}/openfile.f
     ${cmm}/prepnumb.f
     ${cmm}/procnumb.f
+    ${cmm}/showprog.f90
 )
 ### >> LOOPDIR           subrout. << ##
 add_subdirectory(loopdir)
@@ -105,6 +106,14 @@ set (LOOPDIR
     ${lpd}/looporb4.f
     ${lpd}/looporb5.f
     ${lpd}/looporb6.f
+    ${lpd}/looporb7.f
+    ${lpd}/looporb8.f
+    ${lpd}/looporb9.f
+    ${lpd}/looporb10.f
+    ${lpd}/looporb11.f
+    ${lpd}/looporb12.f
+    ${lpd}/looporb13.f
+    ${lpd}/looporb14.f
     ${lpd}/looptree.f
     ${lpd}/ndeloc1.f
     ${lpd}/ndeloc2.f
@@ -131,9 +140,11 @@ set (READ
     ${rd}/atovmall.f
     ${rd}/eloc.f
     ${rd}/fchkinfo.f
+    ${rd}/moldeninfo.f90
     ${rd}/mwfn.f
     ${rd}/p1fromgauss.f90
     ${rd}/readfch.f
+    ${rd}/readmold.f90
     ${rd}/readsom.f
     ${rd}/readwfn.f
     ${rd}/sudgfchk.f

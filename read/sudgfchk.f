@@ -1,4 +1,4 @@
-      subroutine sudgfchk(text,iout,icde,irw,jjj,debug)
+      subroutine sudgfchk(text,ndim,iout,icde,irw,jjj,debug)
 C
 C-----------------------------------------------------------------------
       implicit double precision (a-h,o-z)
@@ -16,8 +16,8 @@ C     dimension options(6)
 C***********************************************************************
 C     iout       = 4
 C***********************************************************************
-      if (debug) print *,'In SUBROUTINE sudgfchk:','"',text,'"',iout,icd
-     .e,irw,jjj,debug
+      if (debug) print *,'In SUBROUTINE sudgfchk:','"',text,'"',ndim,iou
+     .t,icde,irw,jjj,debug
       icde = 0
       jjj  = 0
       if (irw.eq.0) rewind(iout)
@@ -27,7 +27,7 @@ C***********************************************************************
           jjj = 1
           return
         endif
-        if (index(line,text).gt.0) then
+        if (index(line,text(:ndim)).GT.0) then
            if (debug) print *,'+',line,'+',text,'+'
            exit
         endif

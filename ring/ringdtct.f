@@ -5,6 +5,9 @@ C
 C
 C-----------------------------------------------------------------------
       implicit real*8 (a-h,o-z)
+
+      include 'omp_lib.h'
+
       logical        debug,IFAULT
       character*7    charintu,charintd
       character*15   charreal
@@ -47,9 +50,9 @@ C >>> Average dist vector<<<
      .1,ncomb2)
       endif !! (debug) then
 C >>> Sort dist vector   <<<
-      call cpu_time(qtime1)
+      qtime1 = omp_get_wtime()
       call       indexx(ncomb2,dist,indx2)
-      call cpu_time(qtime2)
+      qtime2 = omp_get_wtime()
       write(charreal,'(F15.2)') qtime2-qtime1
       write(*,'("  >> qcksort spent ",8("."),X,a," s")')  
      .                           trim(charreal(verify(charreal,' '):15))
@@ -91,10 +94,10 @@ C >>> Detect last bond   <<<
       write(*,'(28X,"(3 last atom pairs used in ring detection process t
      .ogether with 2 first unused ones)")')
 C
-      call cpu_time(rtime1)
+      rtime1 = omp_get_wtime()
       call       connect(nbond,ncomb2,ncomb,nindex,nato,matcomb2,indx2,
      .                             xx,yy,zz,mxring,nring,matring,debug)
-      call cpu_time(rtime2)
+      rtime2 = omp_get_wtime()
       write(charreal,'(F15.2)') rtime2-rtime1
       write(*,'("  >> Connec part spent ",4("."),X,a," s")')  
      .                           trim(charreal(verify(charreal,' '):15))

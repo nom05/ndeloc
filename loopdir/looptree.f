@@ -22,6 +22,14 @@ C
       external       looporb4
       external       looporb5
       external       looporb6
+      external       looporb7
+      external       looporb8
+      external       looporb9
+      external       looporb10
+      external       looporb11
+      external       looporb12
+      external       looporb13
+      external       looporb14
 C
 C=======================================================================
 C
@@ -47,12 +55,12 @@ C
 C
  103  continue
             call       looporb3(idi,idel,nato,nmo,ndeloc,iperm,nindex,
-     .                                  itmo,matnperm,moc,s,deloc,debug)
+     .                   nproc,icodepar,itmo,matnperm,moc,s,deloc,debug)
       goto 100
 C
  104  continue
             call       looporb4(idi,idel,nato,nmo,ndeloc,iperm,nindex,
-     .                                  itmo,matnperm,moc,s,deloc,debug)
+     .                   nproc,icodepar,itmo,matnperm,moc,s,deloc,debug)
       goto 100
 C
  105  continue
@@ -67,42 +75,42 @@ C
 C
  107  continue
             call       looporb7(idi,idel,nato,nmo,ndeloc,iperm,nindex,
-     .                                  itmo,matnperm,moc,s,deloc,debug)
+     .                   nproc,icodepar,itmo,matnperm,moc,s,deloc,debug)
       goto 100
 C
  108  continue
             call       looporb8(idi,idel,nato,nmo,ndeloc,iperm,nindex,
-     .                                  itmo,matnperm,moc,s,deloc,debug)
+     .                   nproc,icodepar,itmo,matnperm,moc,s,deloc,debug)
       goto 100
 C
  109  continue
             call       looporb9(idi,idel,nato,nmo,ndeloc,iperm,nindex,
-     .                                  itmo,matnperm,moc,s,deloc,debug)
+     .                   nproc,icodepar,itmo,matnperm,moc,s,deloc,debug)
       goto 100
 C
  110  continue
             call       looporb10(idi,idel,nato,nmo,ndeloc,iperm,nindex,
-     .                                  itmo,matnperm,moc,s,deloc,debug)
+     .                   nproc,icodepar,itmo,matnperm,moc,s,deloc,debug)
       goto 100
 C 
  111  continue
             call       looporb11(idi,idel,nato,nmo,ndeloc,iperm,nindex,
-     .                                  itmo,matnperm,moc,s,deloc,debug)
+     .                   nproc,icodepar,itmo,matnperm,moc,s,deloc,debug)
       goto 100
 C
  112  continue
             call       looporb12(idi,idel,nato,nmo,ndeloc,iperm,nindex,
-     .                                  itmo,matnperm,moc,s,deloc,debug)
+     .                   nproc,icodepar,itmo,matnperm,moc,s,deloc,debug)
       goto 100
 C
  113  continue
             call       looporb13(idi,idel,nato,nmo,ndeloc,iperm,nindex,
-     .                                  itmo,matnperm,moc,s,deloc,debug)
+     .                   nproc,icodepar,itmo,matnperm,moc,s,deloc,debug)
       goto 100
 C
  114  continue
             call       looporb14(idi,idel,nato,nmo,ndeloc,iperm,nindex,
-     .                                  itmo,matnperm,moc,s,deloc,debug)
+     .                   nproc,icodepar,itmo,matnperm,moc,s,deloc,debug)
       goto 100
 C
  100  continue

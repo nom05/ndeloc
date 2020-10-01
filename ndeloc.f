@@ -5,7 +5,7 @@ C
 C Nicolás Otero Martínez, September 8 2020
 C
 C =====================
-C === Version 1.2.14 ==
+C === Version 1.2.15 ==
 C =====================
 C
 C#######################################################################
@@ -94,6 +94,18 @@ C*mwfn              * -> Multiwfn format will be employed. The program
 C********************    will search for AOM.txt by default
 C NOTE: The use of basins disables ring detection.
 C
+C                      Example 8 : pentane.ndinp  file
+C********************
+C*pentane debug     * -> WFN  reading algorith will be used. Debug mode is set.
+C*example7          * -> Output file name without extension.
+C*all occ           * -> All MO orbitals will be used. Calculation using orbital occupations(*)
+C*6 deloc           * -> 6-DELOC indices. DELOC indices.
+C*1-3,6,7,10        * -> Basins 1,2,3,6,7,10 from Multiwfn file will be used.
+C*int               * -> AIMPAC int format will be employed.
+C********************
+C (*) This is an approach for multideterminant wavefunctions.
+C
+C
 C ** If distance cut-off is omitted, 1.6 will be used by default **
 C      In general, it is a good default value for C-based rings
 C
@@ -101,20 +113,24 @@ C#######################################################################
 C
 C-----------------------------------------------------------------------
       implicit real*8 (a-h,o-z)
-      logical        debug,filex,genint,lloc,intfuk,lfchk,lgiamb,laimall
-     ,              ,lmwfn,lmwfnrdname
+
+      include 'omp_lib.h'
+
+      logical        debug,filex,genint,lloc,intfuk,lgiamb,laimall
+     +              ,lmwfn,lmwfnrdname
       logical        laom,lbom
       logical        runparal
       logical        lxyz
-      logical        allmo,lpi,outersh,lsigma,loutsig
-      logical        allatoms,allheavy,allring,linear
+      logical        allmo,lpi,outersh,lsigma,loutsig,locc
+      logical        allatoms,allheavy,allring,linear,lpostHF
+      integer        itype !! Wave function file format. =0 wfn, =1 fchk, =2 molden
       character*4    extxyz
-      character*6    extndinp,extndout
+      character*6    extndinp,extndout,extension
       character*7    charint,version
       character*15   charreal
       character*20   text,tmpname
       character*100  filwfn,filinp,filout,filw,filsom,command,filouw
-     ,              ,filabom
+     +              ,filabom
       character*1000 nome
 C
 C----------------------------------------------------------------------
@@ -122,9 +138,9 @@ C----------------------------------------------------------------------
       common /ttime/  start,qtime1,qtime2,rtime1,rtime2
 C
 !23456789 123456789 123456789 123456789 123456789 123456789 123456789 12
-C=======================================================================
+!=======================================================================
 C
-      dimension mati(6),matf(6,5)
+      dimension mati(6),matf(6,5),ipos(2)
 C
 C***********************************************************************
       include 'ndeloc.param.h'  !! MAX VALUES, SOME OPTIONS, DEBUG FLAG
@@ -148,67 +164,122 @@ C
 C >>> Open the wfn/fchk file <<<   line 1
       read(iinp,'(A)',iostat=iii) nome
       if (iii.NE.0) stop ' ** PROBLEM while the input file was read'
-      inpline  = inpline + 1
-      filex    = .TRUE.
-      filw     = nome(1:index(nome,' ')-1)
-      lfchk    = index(trim(filw),'fchk').GT.0
+      inpline   = inpline + 1
+      filex     = .TRUE.
+      filw      = nome(1:index(nome,' ')-1) !! Full name including extension
+      extension = filw(index(filw,'.',.TRUE.)+1:len_trim(filw)) !!  extract extension
+      filw(index(filw,'.',.TRUE.):len(filw)) = '' !! remove extension from file name
+      select case(trim(extension)) !! Wave function file format. =0 wfn, =1 fchk, =2 molden
+        case('wfn')
+          itype = 0
+        case('WFN')
+          itype = 0
+        case('fch')
+          itype = 1
+        case('fchk')
+          itype = 1
+        case('FCH')
+          itype = 1
+        case('FCHK')
+          itype = 1
+        case('molden')
+          itype = 2
+        case('MOLDEN')
+          itype = 2
+        case default
+          stop 'Wrong file or wave function file type not implemented'
+      end select
+      if (debug) PRINT *,'itype=',itype
       nproc    = 1
       runparal = .FALSE.
-      if (.NOT.lfchk.AND.(index(trim(filw),'wfn').LE.0)) stop 'NEITHER F
-     .CHK NOR WFN FILE WAS SPECIFIED'
-      if (debug) print *,'filw=+',trim(filw),'+',lfchk,
-     .                                      index(trim(filw),'wfn').GT.0
-      filw(index(filw,'.',.TRUE.):index(filw,' ',.TRUE.)) = ' '
+      if (debug) print *,'filw=+',trim(filw),'+',trim(extension)
+     +                                                 ,'+ itype=',itype
       iword = 1
       j = len(trim(nome))
+      k = 0
       do i = 1,j
          if (nome(i:i).EQ.' ') then
             if (filex) iword = iword+1
-            ipos  = i
-            filex = .FALSE. 
+            k       = k+1
+            if (k.GT.2) stop ' ** Too many arguments in the LINE 1'
+            ipos(k) = i
+            filex   = .FALSE. 
          else
             filex = .TRUE.
          endif !! (nome(i:i).NE.' ') then
       enddo !! i = 1,len(trim(nome))
       if (debug) print *,'iword=',iword
-      if (iword.EQ.2) then
-         read (nome(ipos+1:j),'(I5)') nproc
-         if (debug) print *,'nproc=',nproc
-      else if (iword.GT.2) then
-         stop ' ** Too many arguments in the LINE 1 were read'
-      endif !! (iword.EQ.1) then
+      text(:) = ''
+      select case (iword)
+         case(1)
+            if (debug) print *,'DBG: wf file is opened - ',trim(filinp)
+         case(2)
+            read (nome(ipos(1)+1:j),'(A)') text
+            if (debug) print *,'DEBUG:',trim(text),'+'
+            if (index(trim(text),'debug').GT.0) then
+               debug = .TRUE.
+               if (debug) print *,'DEBUG mode is set'
+            else
+               read (nome(ipos(1)+1:j),'(I5)') nproc
+               if (debug) print *,'nproc=',nproc
+            endif !! (index(trim(nome),'debug').GT.0) then
+         case(3)
+            if (debug) PRINT *,'DEBUG:',nome(ipos(1)+1:ipos(2)-1),'+'
+            read (nome(ipos(1)+1:ipos(2)-1),'(A)') text
+            if (index(trim(text),'debug').GT.0) then
+               debug = .TRUE.
+               print *,'DEBUG mode is set'
+               print *,'DEBUG:',nome(ipos(2)+1:j),'+'
+               read (nome(ipos(2)+1:j),'(I5)') nproc
+               print *,'nproc=',nproc
+            else
+               read (nome(ipos(1)+1:ipos(2)-1),'(I5)') nproc
+               if (debug) print *,'nproc=',nproc
+               if (index(nome(ipos(2)+1:j),'debug').GT.0) then
+                  debug = .TRUE.
+                  print *,'DEBUG mode is set'
+                  print *,'DEBUG:',nome(ipos(2)+1:j),'+'
+               endif !! (index(nome(ipos(2)+1:j),'debug').GT.0) then
+            endif !! (index(trim(nome),'debug').GT.0) then
+         case default
+            stop ' ** Too many arguments in the LINE 1 were read'
+      end select
       if (nproc.GT.1) then
          runparal = .TRUE.
          write(charint,'(I7)') nproc
          write(*,'("  >> Parallelization enabled <<")')
          call    init_par(runparal,nproc)
          write(*,'("  >> # threads ............ ",A)')
-     .                              trim(charint(verify(charint,' '):7))
+     +                              trim(charint(verify(charint,' '):7))
       endif !! (nproc.GT.1) then
-      if (lfchk) then
-         filwfn = trim(filw)//'.fchk'
-         write(*,'("  >> FCHK File ............ ",A)') trim(filwfn)
-      else
-         filwfn = trim(filw)//'.wfn'
-         write(*,'("  >> WFN  File ............ ",A)') trim(filwfn)
-      endif !! (lfchk) then
+      select case(itype)
+        case(0)
+          filwfn = trim(filw)//'.wfn'
+          write(*,'("  >> WFN    File .......... ",A)') trim(filwfn)
+        case(1)
+          filwfn = trim(filw)//'.fchk'
+          write(*,'("  >> FCHK   File .......... ",A)') trim(filwfn)
+        case(2)
+          filwfn = trim(filw)//'.molden'
+          write(*,'("  >> MOLDEN File .......... ",A)') trim(filwfn)
+      end select
       call       openfile(filwfn  ,iwfn,debug)
 C >>> Open the output file <<<   line 2
       read(iinp,'(a)',iostat=iii) nome
       if (iii.ne.0) stop ' ** PROBLEM while the input file was read ** O
-     .UTPUT file is NOT specified **'
+     +UTPUT file is NOT specified **'
       inpline = inpline + 1
       filouw=nome(1:index(nome,' ')-1)
       filout=filouw(1:len(trim(filouw)))//extndout
       inquire(file=filout,exist=filex)
       if (filex) then
          command = 'mv '//trim(filout)//' '//trim(filout)//'.$(date +%g%
-     .m%d%H%M%S)'
+     +m%d%H%M%S)'
          write(*,'(2X,"OUTPUT file exists: ",a,/,2X,"A back-up will be p
-     .erformed")') trim(filout)
+     +erformed")') trim(filout)
          i = system(command)
-         write(*,'(2x,a,I3,/," ** Restart the calculation")') command,
-     .i
+         write(*,'(2x,a,I3,/," ** Restart the calculation")') command
+     +,i
          stop
       endif !! (filex) then
       filex = .TRUE.
@@ -226,18 +297,18 @@ C >>> Open the output file <<<   line 2
       lxyz = .FALSE.
       if (debug) print *,'iword=',iword
       if (iword.LE.2) then
-         if (debug) print *,'2nd_word=',trim(nome(ipos+1:j))
-         lxyz = index(trim(nome(ipos+1:j)),'xyz').GT.0
+         if (debug) print *,'2nd_word=',trim(nome(ipos(1)+1:j))
+         lxyz = index(trim(nome(ipos(1)+1:j)),'xyz').GT.0
       else
          stop ' ** Too many arguments in the OUTPUT config line were rea
-     .d'
+     +d'
       endif !! (iword.LE.2) then
       write(*,'("  >> OUTPUT File .......... ",a)') trim(filout)
       if (lxyz) write(*,'("  >> XYZ file option detected <<")')
 C >>> Select MOs           <<<   line 3
       read(iinp,'(A)',iostat=iii) nome
       if (iii.ne.0) stop ' ** PROBLEM while the input file was read ** M
-     .Os?'
+     +Os?'
       inpline = inpline + 1
       allmo   = .FALSE.
       lpi     = .FALSE.
@@ -245,6 +316,7 @@ C >>> Select MOs           <<<   line 3
       outersh = .FALSE.
       loutsig = .FALSE.
       linear  = .FALSE.
+      locc    = .FALSE.
       write(*,'("  >> Specified orbitals ... ",$)')
       if (index(trim(nome),'all').GT.0) then
          allmo   = .TRUE.
@@ -268,7 +340,7 @@ C.............
          jjj    = 0
          irw    = 1
          do while (jjj.EQ.0) 
-            call sudgfchk(text,isom,icde,irw,jjj,debug)
+            call sudgfchk(text,20,isom,icde,irw,jjj,debug)
             if (jjj.EQ.0) npi = npi+1
          enddo !! while (jjj.EQ.0) 
          write(charint,'(I7)') npi
@@ -294,7 +366,7 @@ C.............
          jjj = 0
          irw = 1
          do while (jjj.EQ.0) 
-            call sudgfchk(text,isom,icde,irw,jjj,debug)
+            call sudgfchk(text,20,isom,icde,irw,jjj,debug)
             if (jjj.EQ.0) npi = npi+1
          enddo !! while (jjj.EQ.0) 
          write(charint,'(I7)') npi
@@ -320,7 +392,7 @@ C.............
          jjj = 0
          irw = 1
          do while (jjj.EQ.0) 
-            call sudgfchk(text,isom,icde,irw,jjj,debug)
+            call sudgfchk(text,20,isom,icde,irw,jjj,debug)
             if (jjj.EQ.0) npi = npi+1
          enddo !! while (jjj.EQ.0) 
          write(charint,'(I7)') npi
@@ -336,6 +408,11 @@ C.............
          write(charint,'(I7)') imos
          write(*,'(A,A)') trim(charint(verify(charint,' '):7)),' MOs'
       endif !! (index(trim(nome),'all').gt.0) then
+      locc = index(trim(nome),'occ').GT.0
+      if (locc.AND.itype.EQ.1) stop 'fchk files do not contain occupatio
+     +n numbers explicitly!!'
+      if (locc) write(*,'("  >> Occupation numbers will be used to scale
+     + overlap matrices <<")')
 C >>> Select N-(DE)LOC index<<<  line 4
       read(iinp,'(a)',iostat=iii) nome
       if (iii.ne.0) stop ' ** PROBLEM while the input file was read'
@@ -344,30 +421,35 @@ C >>> Select N-(DE)LOC index<<<  line 4
       if (lloc)    write(*,'("  >> LOC indices will be considered <<")')
       lgiamb  = index(trim(nome),'giamb').GT.0
       if (lgiamb)
-     .  write(*,'("  >> Only Giambiagi indices will be considered <<")')
+     +  write(*,'("  >> Only Giambiagi indices will be considered <<")')
       charint = trim(nome(1:index(nome,' ')))
       read (charint,*) nindex
       write(*,'("  >> ",a,"-(DE)LOC will be calculated <<")')trim(charin
-     .t(verify(charint,' '):7))
+     +t(verify(charint,' '):7))
       laom    = index(trim(nome),'aom').GT.0
       lbom    = index(trim(nome),'bom').GT.0
       if (lbom) then
          write(*,'("  >> Basin overlap matrices will be read <<")')
          write(*,'("  >> WARNING: Ring detection disabled with BOMs !! <
-     .<")')
+     +<")')
       else
          write(*,'("  >> Atomic overlap matrices will be read <<")')
          laom = .TRUE.
       endif !! (lbom) then
       if (lbom.AND.laom) stop 'AOMs and BOMs cannot be combined'
 C >>> Initial data       <<<
-      if (lfchk) then
-         call fchkinfo(iwfn,nmo,nprim,nat,nheavy,debug)
-         write(*,'("  >> NMOs,NBFunc,NAtoms ... ",$)') 
-      else
-         call  wfninfo(iwfn,nmo,nprim,nat,nheavy,debug)
-         write(*,'("  >> NMOs,NPrims,NAtoms ... ",$)') 
-      endif !! (lfchk) then
+      select case(itype)
+        case(0)
+          call    wfninfo(iwfn,nmo,nprim,nat,nheavy,debug)
+          write(*,'("  >> NMOs,NPrims,NAtoms ... ",$)') 
+        case(1)
+          call   fchkinfo(iwfn,nmo,nprim,nat,nheavy,debug)
+          write(*,'("  >> NMOs,NBFunc,NAtoms ... ",$)') 
+        case(2)
+          call moldeninfo(iwfn,moldentype,nmo,nprim,nat,nheavy,lpostHF,
+     .                                                            debug)
+          write(*,'("  >> NMOs,NPrims,NAtoms ... ",$)') 
+      end select
       write(charint,'(I7)') nmo
       write(*,'(a,", ",$)') trim(charint(verify(charint,' '):7))
       write(charint,'(I7)') nprim
@@ -406,17 +488,17 @@ C >>> Select Atoms or basins<<<  line 5
          if (nindex.LT.3) stop ' ** 2-atom rings?!?!'
       elseif (lgiamb) then
          write(*,'("  >> giamb specified without ring detection <<",2(/)
-     .,10X,"** CHECK THE ATOM ORDER !!! ***",/)')
+     +,10X,"** CHECK THE ATOM ORDER !!! ***",/)')
       endif !! (allring) then
       write(charint,'(I7)') iato
       if (lbom) then
          write(*,'("  >> # Specified basins ... ",a)') trim(charint(veri
-     .fy(charint,' '):7))
+     +fy(charint,' '):7))
       else if (laom) then
          write(*,'("  >> # Specified atoms .... ",a)') trim(charint(veri
-     .fy(charint,' '):7))
+     +fy(charint,' '):7))
          if (iato.LT.nindex) stop ' ** PROBLEM :  The number of atoms is
-     . not enough to perform the calculation'
+     + not enough to perform the calculation'
       else
          stop 'AOM/BOM not detected in input file.'
       endif !! (lbom) then
@@ -435,10 +517,10 @@ C >>> Select Atoms or basins<<<  line 5
             endif !! (nome(i:i).NE.' ') then
          enddo !! i = 1,len(trim(nome))
          if (iword.GT.2) then
-            charreal = trim(nome(ipos+1:j))
+            charreal = trim(nome(ipos(1)+1:j))
             read (charreal,*,iostat=iii) bonddist
             if (iii.NE.0) stop ' ** PROBLEM while the bond distance was 
-     .read'
+     +read'
             if (debug) print *,bonddist,iii
          else
             bonddist = defbdist
@@ -446,7 +528,7 @@ C >>> Select Atoms or basins<<<  line 5
       else
          if (lxyz) then
             write(*,'("  >> XYZ files will not be created <<",/,5X,
-     .                    "(ring option is not included or disabled)")')
+     +                    "(ring option is not included or disabled)")')
             lxyz = .FALSE.
          endif !! (lxyz) then
          if (allring) allring = .FALSE.
@@ -454,7 +536,7 @@ C >>> Select Atoms or basins<<<  line 5
 C >>> Number of DELOC inds <<<
 C NINDEX     1 - 2 - 3 - 4 - 5 - 6 - 7 - 8 - 9 - 10- 11- 12- 13- 14
       goto (101,102,103,103,103,103,103,103,103,103,103,103,103,103)
-     .                                                            nindex
+     +                                                            nindex
 C
  101  continue
       stop ' ** This index is not implemented **'
@@ -474,10 +556,10 @@ C
          if (lloc) i = i+iato
          write(charint,'(I7)') i
          write(*,'("  >> # (de)loc indices .... ",a)') trim(charint(veri
-     .fy(charint,' '):7))
+     +fy(charint,' '):7))
       else
          write(*,'("  >> # (de)loc indices will be calculated with ring 
-     .detection <<")')
+     +detection <<")')
       endif !! (.NOT.allring) then
 C >>> Read file names (optional) lines 6 ...
       nome(:)    = ''
@@ -492,7 +574,7 @@ C >>> Read file names (optional) lines 6 ...
          genint = .FALSE.
          intfuk = .FALSE.
          if (debug) print *,'** atomic overlap matrix files: '
-     ,                     ,genint,intfuk
+     +                     ,genint,intfuk
          write(*,'("  >> Files will be read from the input file << ")')
          inpline = inpline + 1
       elseif (index(trim(nome),'int').GT.0) then
@@ -502,7 +584,7 @@ C >>> Read file names (optional) lines 6 ...
          intfuk  = .TRUE.
          laimall = .FALSE.
          if (debug) print *,'** atomic overlap matrix files: ',genint,in
-     .tfuk
+     +tfuk
          if (debug) print *,'** input file finished'
          write(*,'("  >> AOM File type ........ ",A)') 'int'
       elseif (index(trim(nome),'aimall').GT.0) then
@@ -512,7 +594,7 @@ C >>> Read file names (optional) lines 6 ...
          genint  = .TRUE.
          intfuk  = .TRUE.
          if (debug) print *,'** atomic overlap matrix files: ',genint,in
-     .tfuk,' for AIMAll'
+     +tfuk,' for AIMAll'
          if (debug) print *,'** input file finished'
          write(*,'("  >> AOM File type ........ ",A)') 'AIMAll int'
       elseif (index(trim(nome),'fuk').GT.0) then
@@ -521,7 +603,7 @@ C >>> Read file names (optional) lines 6 ...
          intfuk = .FALSE.
          inpline = inpline + 1
          if (debug) print *,'** atomic overlap matrix files: ',genint,in
-     .tfuk
+     +tfuk
          if (debug) print *,'** input file finished'
          write(*,'("  >> AOM File type ........ ",A)') 'fuk'
       elseif (index(trim(nome),'eloc').GT.0) then
@@ -530,7 +612,7 @@ C >>> Read file names (optional) lines 6 ...
          intfuk = .TRUE.
          inpline = inpline + 1
          if (debug) print *,'** atomic overlap matrix files: ',genint,in
-     .tfuk
+     +tfuk
          if (debug) print *,'** input file finished'
          write(*,'("  >> AOM File type ........ ",A)') 'eloc'
       elseif (index(trim(nome),'mwfn').GT.0) then
@@ -554,7 +636,7 @@ C >>> Read file names (optional) lines 6 ...
          endif !! (index(trim(nome),'=read').GT.0) then
          inpline = inpline + 1
          if (debug) print *,'** atomic overlap matrix files: ',genint,in
-     .tfuk
+     +tfuk
          if (debug) print *,'** input file finished'
          write(*,'("  >> AOM/BOM file type .... ",A)') 'mwfn'
 C          (determine # basins if lbom enabled):
@@ -565,8 +647,7 @@ C          (determine # basins if lbom enabled):
             jjj    = 0
             irw    = 1
             do while (jjj.EQ.0) 
-               call sudgfchk(text,iom ,icde,irw,jjj,debug)
-                        PRINT *,'jjj=',jjj
+               call sudgfchk(text,20,iom ,icde,irw,jjj,debug)
                if (jjj.EQ.0) nbasin = nbasin+1
             enddo !! while (jjj.EQ.0) 
             close(iom)
@@ -590,10 +671,10 @@ C          (determine # basins if lbom enabled):
             endif !! (nome(i:i).NE.' ') then
          enddo !! i = 1,len(trim(nome))
          if (iword.GE.2) then
-            charint = trim(nome(ipos+1:j))
+            charint = trim(nome(ipos(1)+1:j))
             read (charint,*,iostat=iii) nzeros
             if (iii.NE.0) stop ' ** PROBLEM while the number of zeros in
-     . the file names was read'
+     + the file names was read'
             if (debug) print *,'nzeros was read= ',nzeros,iii
          else
             nzeros = nzerodef
@@ -607,36 +688,36 @@ C +++ ELSE Check if a 2nd argument exists to calculate direct indices +++
          stop 'NOT IMPLEMENTED'
       endif
 C >>> Check   data       <<<
-        PRINT *,nindex,nbasin
       if (laom.AND.nindex.GT.nat   ) 
-     .                           stop ' ** N-(DE)LOC index > NAtoms  **'
+     +                           stop ' ** N-(DE)LOC index > NAtoms  **'
       if (lbom.AND.nindex.GT.nbasin)
-     .                           stop ' ** N-(DE)LOC index > NBasins **'
+     +                           stop ' ** N-(DE)LOC index > NBasins **'
       if (nmo.GT.maxmo ) stop ' ** Increase MAXMO, please **'
       if (nat.GT.maxato) stop ' ** Increase MAXATO, please **'
 C
-      call cpu_time(start)
+      start  = omp_get_wtime()
       call       goon(iwfn,iout,iinp,isom,nmo,nprim,nat,allmo,iato,iint,
-     .     allatoms,allheavy,outersh,lpi,npi,lloc,nindex,ndeloc,inpline,
-     .version,nheavy,lfchk,bonddist,mxring,allring,genint,intfuk,lgiamb,
-     .  runparal,nproc,lsigma,loutsig,imos,ifrmo,ifrag,ixyz,lxyz,nzeros,
-     .          nbasin,laom,lbom,lmwfnrdname,lmwfn,linear,laimall,debug)
-      call cpu_time(finish)
+     +     allatoms,allheavy,outersh,lpi,npi,lloc,nindex,ndeloc,inpline,
+     .version,nheavy,itype,bonddist,mxring,allring,genint,intfuk,lgiamb,
+     +  runparal,nproc,lsigma,loutsig,imos,ifrmo,ifrag,ixyz,lxyz,nzeros,
+     .           locc,nbasin,laom,lbom,lmwfnrdname,lmwfn,linear,laimall,
+     .                                         lpostHF,moldentype,debug)
+      finish = omp_get_wtime()
       write(iout,'(/)')
       if (allring) then
          write(charreal,'(F15.2)') qtime2-qtime1
          write(iout,'("   >> qcksort spent ",11("."),X,a," seconds")')
-     .                           trim(charreal(verify(charreal,' '):15))
+     +                           trim(charreal(verify(charreal,' '):15))
          write(charreal,'(F15.2)') rtime2-rtime1
-         write(iout,'("   >> Connect analysis spent ",2("."),X,a," sec
-     .onds")')
-     .                           trim(charreal(verify(charreal,' '):15))
+         write(iout,'("   >> Connect analysis spent ",2("."),X,a," secon
+     +ds")')
+     +                           trim(charreal(verify(charreal,' '):15))
       endif !! (allring) then
       write(charreal,'(F15.2)') finish-start
       write(*   ,'(   "  >> Elapsed time ", 9("."),X,a," seconds")') 
-     .                           trim(charreal(verify(charreal,' '):15))
+     +                           trim(charreal(verify(charreal,' '):15))
       write(iout,'(   "   >> Elapsed time ",12("."),X,a," seconds")') 
-     .                           trim(charreal(verify(charreal,' '):15))
+     +                           trim(charreal(verify(charreal,' '):15))
 C
       close(iwfn)
       close(isom)
@@ -645,5 +726,5 @@ C
 C
       stop
       end
-C=======================================================================
+!=======================================================================
 C

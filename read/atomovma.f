@@ -25,7 +25,7 @@ C***********************************************************************
      .at,iatt, pop ,iword,debug'
 C
       text = 'RESULTS OF THE INTEG'
-      call sudgfchk(text,iint,icde,0,jjj,debug)
+      call sudgfchk(text,20,iint,icde,0,jjj,debug)
       if (jjj.NE.0) stop ' ** PROBLEM while the atomic over
      .lapping matrix was read'
       if (iword.EQ.2) then
@@ -36,7 +36,7 @@ C
          stop '** WRONG NUMBER OF WORKS TO BE READ IN AT OV FILE **'
       endif !! (iword.EQ.2) then
       text = 'The Atomic Overlap M'
-      call sudgfchk(text,iint,icde,1,jjj,debug)
+      call sudgfchk(text,20,iint,icde,1,jjj,debug)
       if (jjj.NE.0) stop ' ** PROBLEM while the atomic over
      .lapping matrix was read'
       read (iint,'(2(/),a)') chtemp

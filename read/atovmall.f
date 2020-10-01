@@ -24,12 +24,12 @@ C***********************************************************************
      .at,iatt, pop ,debug'
 C
       text = 'Results of the basin'
-      call sudgfchk(text,iint,icde,0,jjj,debug)
+      call sudgfchk(text,20,iint,icde,0,jjj,debug)
       if (jjj.NE.0) stop ' ** PROBLEM while the atomic over
      .lapping matrix was read'
       read (iint,*) chtemp,chtemp,pop(iat)
       text = 'The Atomic Overlap M'
-      call sudgfchk(text,iint,icde,1,jjj,debug)
+      call sudgfchk(text,20,iint,icde,1,jjj,debug)
       if (jjj.NE.0) stop ' ** PROBLEM while the atomic over
      .lapping matrix was read'
       read (iint,'(2(/),a)') chtemp

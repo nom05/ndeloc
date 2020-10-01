@@ -39,7 +39,7 @@ c        do jom = 1,nmo
             write(charintd,'(I4)') jom
             text = text(1:ilong)//trim(charint)//trim(charintd)
             if (debug) print '("+",A,"+",$)',text
-            call sudgfchk(text,ieloc,icde,1,jjj,debug)
+            call sudgfchk(text,len_trim(text),ieloc,icde,1,jjj,debug)
             if (jjj.NE.0) stop ' ** PROBLEM while the atomic overlapping
      . matrix was read'
             read (ieloc,'(/,36X,I12)') nmotmp
@@ -50,7 +50,7 @@ c        do jom = 1,nmo
                stop
             endif !! (nmotmp.NE.nmo) then
 c           text = '   #  Z    TR(Pat*S)'
-c           call sudgfchk(text,ieloc,icde,1,jjj,debug)
+c           call sudgfchk(text,20,ieloc,icde,1,jjj,debug)
 c           if (jjj.NE.0) stop ' ** PROBLEM while the atomic overlapping
 c    . matrix was read'
 c           do inat = 1,nat
@@ -60,7 +60,7 @@ c           do inat = 1,iatt
 c              pop(inat) = ptmp(iatoma(inat))
 c           enddo !! inat = 1,iatt
             text = 'corrected stockholde'
-            call sudgfchk(text,ieloc,icde,1,jjj,debug)
+            call sudgfchk(text,20,ieloc,icde,1,jjj,debug)
             if (jjj.NE.0) stop ' ** PROBLEM while the atomic overlapping
      . matrix was read'
             read (ieloc,'(A)') charintd
