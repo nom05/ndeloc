@@ -3,8 +3,9 @@
      ."      ( * = possible options in the corresponding line )"      ,/
      ."     o Line 1 :  WFN/FCHK file with extension+# threads+debug" ,/
      ."              *  file   -> File with extension:"               ,/
-     ."                         > wfn  reading algorithm to be used." ,/
-     ."                         > fchk reading algorithm to be used." ,/
+     ."                           - wfn    reading algorithm.        ",/
+     ."                           - fchk   reading algorithm.        ",/
+     ."                           - molden reading algorithm.        ",/
      ."              *  # threads to be used through OpenMP."         ,/
      ."              *  debug  -> debug mode is set."                 ,/
      ."     o Line 2 :  OUTPUT          specification:"               ,/
