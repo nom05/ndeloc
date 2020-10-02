@@ -72,13 +72,21 @@ c        read(iwfn,'(34X,F13.7)',err=52,end=52) pel(j)
 C >>> Detect UHF
       if (nint(pel(1)).NE.2) then
          luhf  = .TRUE.
-         ialfa = 1
-         if (nmo.GT.1) then
-            do i = 2,nmo
-               if (eom(i).LT.eom(i-1)) exit
-            enddo !! i = 2,nmo
-            ialfa=i-1
-         endif !! (nmo.GT.1) then
+         select case(nmo)
+           case(1) !! Hydrogen
+              ialfa = 1
+           case(2) !! Helium
+              if (eom(1).EQ.eom(2)) then !! ground state obtained as unrestricted calc
+                 ialfa = 1
+              else
+                 ialfa = 2
+              endif !! (eom(1).EQ.eom(2)) then
+           case default
+              do i = 2,nmo
+                 if (eom(i).LT.eom(i-1)) exit
+              enddo !! i = 2,nmo
+              ialfa=i-1
+         end select
          if (debug) write (*,'(10X,"UHF calc. ORB. E(n_alpha)=",F11.6,5
      .X,"ORB. E(n_alpha+1)=",F11.6)') eom(ialfa),eom(ialfa+1)
       endif
