@@ -1,8 +1,9 @@
-      subroutine atovmall(iint,nmo,nprim,nat,iat,iatt,pop,ss,debug)
+      subroutine atovmall(iint,nmo,nprim,nat,iat,iatt,pop,ss,lfixbug,
+     ,                                                            debug)
 C
 C-----------------------------------------------------------------------
       implicit double precision (a-h,o-z)
-      logical      debug
+      logical      debug,lfixbug
       character*3  chtemp
       character*20 text
 C
@@ -23,6 +24,20 @@ C***********************************************************************
       if (debug) print *,'                         ,iint,nmo,nprim,nat,i
      .at,iatt, pop ,debug'
 C
+      text = 'Number of Alpha elec'
+      call sudgfchk(text,20,iint,icde,1,jjj,debug)
+      if (jjj.NE.0) stop ' ** PROBLEM detecting AIMAll bug with non Gaus
+     .sian wfns'
+      backspace(iint)
+      read (iint,'(60X,F20.10)') tmp
+      if (tmp.EQ.0.) then
+         ijump = 1
+         lfixbug = .TRUE.
+      else
+         ijump = 2
+         lfixbug = .FALSE.
+      endif !! (tmp.EQ.0.) then
+C
       text = 'Results of the basin'
       call sudgfchk(text,20,iint,icde,0,jjj,debug)
       if (jjj.NE.0) stop ' ** PROBLEM while the atomic over
@@ -32,7 +47,10 @@ C
       call sudgfchk(text,20,iint,icde,1,jjj,debug)
       if (jjj.NE.0) stop ' ** PROBLEM while the atomic over
      .lapping matrix was read'
-      read (iint,'(2(/),a)') chtemp
+      do i = 1,ijump
+         read (iint,*)
+      enddo !! i = 1,ijump
+      read (iint,'( F14.10)') ss(iat,1,1)
       do i=1,nmo
          read (iint,'(6F14.10)') (ss(iat,i,j),j=1,i)
          do j = 1,i

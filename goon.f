@@ -10,7 +10,7 @@ C
 C-----------------------------------------------------------------------
       implicit double precision (a-h,o-z)
       logical        debug,filex,lloc,luhf,lxyz,lpostHF,runparal
-      logical        genint,intfuk,laimall,lmwfn,lmwfnrdname
+      logical        genint,intfuk,laimall,lmwfn,lmwfnrdname,lfixbug
       logical        allmo,lpi,outersh,lsigma,loutsig,linear,locc
       logical        allatoms,allheavy,allring,lgiamb,laom,lbom
       integer        itype !! =0 wfn, =1 fchk, =2 molden
@@ -204,7 +204,8 @@ c              enddo !! i = 1,iato
      .                    //'.int'
                  call     openfile(filint(i),iint,debug)
                  if (debug) print *,' ;;;>>> AIMAll FORMAT ***'
-                 call atovmall(iint,nmo,nprim,nat,i  ,iato,pop,ss,debug)
+                 call atovmall(iint,nmo,nprim,nat,i  ,iato,pop,ss,
+     ,                                                    lfixbug,debug)
                else
                  filint(i) = trim(filw)//'_'//trim(atoms(i))//'.int'
                  call     openfile(filint(i),iint,debug)
@@ -231,6 +232,8 @@ c              enddo !! i = 1,iato
             enddo !! i = 1,iato
       endif !! (.NOT.genint.AND..NOT.intfuk) then
       write(*,'(/)')
+      if (laimall.AND.lfixbug) write(*,'("  >> Format change due to BUG 
+     .in AIMAll detected and fixed <<")') 
 C >>> Scale overlap matrices if required<<<
       if (locc.AND.allocated(pel)) 
      +                           call scaleovermat(luhf,nmo,iato,pel,ss)
