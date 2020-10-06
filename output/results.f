@@ -14,7 +14,7 @@ C-----------------------------------------------------------------------
       character*3    aombom
       character*7    charint,charintd,atoms,version
       character*15   charreal,atomlabel
-      character*54   formato
+      character*54   formato,formato2
       character*100  filwfn,filinp,filout,filw,filsom,filint,filxyz,
      .               filouw
       character*1000 nome
@@ -288,7 +288,7 @@ C >>> RESULTS <<<
       elseif (nindex.GT.2) then                   !! >2-DELOC indices
          if (lloc) then
             write(charint,'(I5)') iato
-            formato = '(29x,'//trim(charint(verify(charint,' '):5))//'(3
+            formato = '(30x,'//trim(charint(verify(charint,' '):5))//'(3
      .x,a5,3x))'
             if (debug) print *,'Formats :  ',trim(formato)
             write(iout,formato)(trim(atoms(i)),i=1,iato)
@@ -303,7 +303,7 @@ C >>> RESULTS <<<
 C >>> GIAMBIAGI INDEX ONLY
          if (lgiamb) then
             write(charint ,'(I5)') nindex
-            write(charintd,'(I5)') nindex*4+4+len(trim(charint))
+            write(charintd,'(I5)')nindex*(nzeros+2)+4+len(trim(charint))
             formato = '(A20,X,A,"-DELOC :",'//trim(charintd(verify(chari
      .ntd,' '):5))//'X,A11)'
             write(iout,formato)
@@ -312,25 +312,37 @@ C >>> GIAMBIAGI INDEX ONLY
             write(charint,'(I5)') nindex
             formato = '(5X,"* Index ",I3,X,13("."),X,'//trim(charint(ver
      .ify(charint,' '):5))//'(A,X),8X,1X,1PE10.3)'
+            formato2(:) = ''
+            write(charintd,'(I5)') nindex*(nzeros+2)+12
+            formato2 = '(6X," - ",A10,"''s norm.",'//trim(charintd(veri
+     .fy(charintd,' '):5))//'X,1X,1PE10.3)'
             if (debug) then
-               print *,'Formats :  ',trim(formato)
+               print *,'Formats :  ',trim(formato),trim(formato2)
                print *,'matindx=',(matindx(1,j),j=1,nindex)
             endif !! (debug) then
             if (laom) then
                do i = 1,ndeloc
                   write(iout,formato) i,(trim(atomlabel(matindx(i,j)
      ,        ,nato,iq(matindx(i,j)),nzeros,debug)),j=1,nindex),giamb(i)
+                  write(iout,formato2) "Ponec",
+     .                2.**(nindex-1)*giamb(i)
+                  write(iout,formato2) "Cioslowski",
+     .             rnormaliz(giamb(i),nindex)
                enddo !! i = 1,ndeloc
             else if (lbom) then
                do i = 1,ndeloc
                   write(iout,formato) i,(trim(atomlabel(matindx(i,j)
      ,        ,nato,0               ,nzeros,debug)),j=1,nindex),giamb(i)
+                  write(iout,formato2) "Ponec",
+     .                2.**(nindex-1)*giamb(i)
+                  write(iout,formato2) "Cioslowski",
+     .             rnormaliz(giamb(i),nindex)
                enddo !! i = 1,ndeloc
             endif !! (laom) then
          else
 C >>> BOTH      INDICES (Giambiagi,Ponec)
             write(charint ,'(I5)') nindex
-            write(charintd,'(I5)') nindex*4+4+len(trim(charint))
+            write(charintd,'(I5)')nindex*(nzeros+2)+4+len(trim(charint))
             formato = '(A20,X,A,"-DELOC :",'//trim(charintd(verify(chari
      .ntd,' '):5))//'X,A11,A11)'
             write(iout,formato)
@@ -339,8 +351,12 @@ C >>> BOTH      INDICES (Giambiagi,Ponec)
             write(charint,'(I5)') nindex
             formato = '(5X,"* Index ",I3,X,13("."),X,'//trim(charint(ver
      .ify(charint,' '):5))//'(A,X),8X,2(1X,1PE10.3))'
+            formato2(:) = ''
+            write(charintd,'(I5)') nindex*(nzeros+2)+12
+            formato2 = '(6X," - ",A10,"''s norm.",'//trim(charintd(veri
+     .fy(charintd,' '):5))//'X,2(1X,1PE10.3))'
             if (debug) then
-               print *,'Formats :  ',trim(formato)
+               print *,'Formats :  ',trim(formato),trim(formato2)
                print *,'matindx=',(matindx(1,j),j=1,nindex)
             endif !! (debug) then
             if (laom) then
@@ -348,12 +364,20 @@ C >>> BOTH      INDICES (Giambiagi,Ponec)
                   write(iout,formato) i,(trim(atomlabel(matindx(i,j)
      ,        ,nato,iq(matindx(i,j)),nzeros,debug)),j=1,nindex),giamb(i)
      ,                                                         ,deloc(i)
+                  write(iout,formato2) "Ponec",
+     .                2.**(nindex-1)*giamb(i),2.**(nindex-1)*deloc(i)
+                  write(iout,formato2) "Cioslowski",
+     .             rnormaliz(giamb(i),nindex),rnormaliz(deloc(i),nindex)
                enddo !! i = 1,ndeloc
             else if (lbom) then
                do i = 1,ndeloc
                   write(iout,formato) i,(trim(atomlabel(matindx(i,j)
      ,        ,nato,0               ,nzeros,debug)),j=1,nindex),giamb(i)
      ,                                                         ,deloc(i)
+                  write(iout,formato2) "Ponec",
+     .                2.**(nindex-1)*giamb(i),2.**(nindex-1)*deloc(i)
+                  write(iout,formato2) "Cioslowski",
+     .             rnormaliz(giamb(i),nindex),rnormaliz(deloc(i),nindex)
                enddo !! i = 1,ndeloc
             endif !! (laom) then
          endif !! (lgiamb) then

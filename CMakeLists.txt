@@ -92,6 +92,7 @@ set (COMMON
     ${cmm}/calcdist.f
     ${cmm}/hmnumb.f
     ${cmm}/ncolumn.f
+    ${cmm}/normaliz.f90
     ${cmm}/openfile.f
     ${cmm}/prepnumb.f
     ${cmm}/procnumb.f
