@@ -2,25 +2,21 @@
 C
 C Program that calculates the N-DELOC indices.
 C
-C Nicolás Otero Martínez, September 8 2020
+C Nicolás Otero Martínez, April 20 2022
 C
 C =====================
-C === Version 1.2.15 ==
+C === Version 1.2.16 ==
 C =====================
 C
 C#######################################################################
 C COMPILE   :
-C
-C   fortran_compiler ndeloc.f ndelocdir/ndeloc1.f ndelocdir/ndeloc2.f \
-C         ndelocdir/looporb*.f ndelocdir/choose.f -o ndeloc.x
-C
-C                                OR
-C
-C   fortran_compiler ndeloc.f ndelocdir/ndeloc[12].f \
-C         ndelocdir/looporb*.f ndelocdir/choose.f -o ndeloc.x
-C
-C ** fortran_compiler :  A fortran compiler. I have used ifort 
-C                        and gfortran to write this program
+C Use CMake:
+C   $ Exit this file
+C   $ mkdir build; cd build
+C   $ cmake ..
+C   $ make
+C * To force use of compiler (gfortran,ifort,...)
+C   $ cmake -DCMAKE_Fortran_COMPILER=compiler ..
 C#######################################################################
 C EXAMPLES  :
 C                      Example 1 : 2B1.ndinp   file
@@ -146,6 +142,8 @@ C***********************************************************************
       include 'ndeloc.param.h'  !! MAX VALUES, SOME OPTIONS, DEBUG FLAG
 C***********************************************************************
 C
+      nfpi = 0  ! =1 .sg; =2 .som
+      lpostHF = .FALSE.
       laom = .TRUE.
       lbom = .FALSE.
       write(*,'(/,14X,a,a,/)') ' N D E L O C  v.',trim(version)
@@ -322,83 +320,159 @@ C >>> Select MOs           <<<   line 3
          allmo   = .TRUE.
          write(*,'(a)') 'ALL'
       elseif (index(trim(nome),'pi').GT.0) then
-         write(*,'(a,$)') 'PI ('
-         filsom = filw(1:index(filw,' ')-1)//'.som'
-         call       openfile(filsom  ,isom,debug)
-C.............
-         text   = ' respecto al eje: '
-         call sudgfdim(18  ,text,isom,icde,1  ,jjj,debug)
-         linear = jjj.EQ.0
-         rewind(isom)
-         if (linear) then
-            text   = 'PI   respecto al eje'
-         else
-            text   = 'PI   respecto al pla'
-         endif !! (linear) then
-C.............
+         allmo  = .FALSE.
          npi    = 0
-         jjj    = 0
-         irw    = 1
-         do while (jjj.EQ.0) 
-            call sudgfchk(text,20,isom,icde,irw,jjj,debug)
-            if (jjj.EQ.0) npi = npi+1
-         enddo !! while (jjj.EQ.0) 
-         write(charint,'(I7)') npi
-         write(*,'(a," MOs)")') trim(charint(verify(charint,' '):7))
+         write(*,'(a,$)') 'PI ('
+         filsom = filw(1:index(filw,' ')-1)//'.sg'
+         inquire(file=filsom,exist=filex)
+         if (filex) then
+            nfpi = 1
+         else
+            filsom = filw(1:index(filw,' ')-1)//'.som'
+            inquire(file=filsom,exist=filex)
+            if (filex) nfpi = 2
+         endif !! (filex) then
+         call openfile(filsom  ,isom,debug)
+         select case(nfpi)
+           case(0)
+             write(*,'(a,a)') filw(1:index(filw,' ')-1),
+     ,            '.{sg,som} not found! -> ALL'
+             allmo   = .TRUE.
+           case(1)
+             read (isom,*,iostat=i) itmpmo,npi
+             if (i.NE.0) stop 'ERROR reading .sg file'
+           case(2)
+             text   = ' respecto al eje: '
+             call sudgfdim(18  ,text,isom,icde,1  ,jjj,debug)
+             linear = jjj.EQ.0
+             rewind(isom)
+             if (linear) then
+                text   = 'PI   respecto al eje'
+             else
+                text   = 'PI   respecto al pla'
+             endif !! (linear) then
+             npi    = 0
+             jjj    = 0
+             irw    = 1
+             do while (jjj.EQ.0) 
+                call sudgfchk(text,20,isom,icde,irw,jjj,debug)
+                if (jjj.EQ.0) npi = npi+1
+             enddo !! while (jjj.EQ.0) 
+           case default
+             stop 'SIGMA/PI identification code not implemented'
+         end select !! case(nfpi)
          lpi     = npi.GT.0
          allmo   = npi.LE.0
-      elseif (index(trim(nome),'sigma').GT.0) then
-         write(*,'(a,$)') 'SIGMA ('
-         filsom = filw(1:index(filw,' ')-1)//'.som'
-         call       openfile(filsom  ,isom,debug)
-C.............
-         text   = ' respecto al eje: '
-         call sudgfdim(18  ,text,isom,icde,1  ,jjj,debug)
-         linear = jjj.EQ.0
-         rewind(isom)
-         if (linear) then
-            text   = 'SIGMA respecto al ej'
-         else
-            text   = 'SIGMA respecto al pl'
-         endif !! (linear) then
-C.............
-         npi = 0
-         jjj = 0
-         irw = 1
-         do while (jjj.EQ.0) 
-            call sudgfchk(text,20,isom,icde,irw,jjj,debug)
-            if (jjj.EQ.0) npi = npi+1
-         enddo !! while (jjj.EQ.0) 
          write(charint,'(I7)') npi
-         write(*,'(a," MOs)")') trim(charint(verify(charint,' '):7))
+         if (allmo) then
+            write(*,'("0 MOs) -> ALL")')
+         else
+            write(*,'(a," MOs)")') 
+     .                          trim(charint(verify(charint,' '):7))
+         endif !! (allmo) then
+      elseif (index(trim(nome),'sigma').GT.0) then
+         allmo  = .FALSE.
+         npi    = 0
+         write(*,'(a,$)') 'SIGMA ('
+         filsom = filw(1:index(filw,' ')-1)//'.sg'
+         inquire(file=filsom,exist=filex)
+         if (filex) then
+            nfpi = 1
+         else
+            filsom = filw(1:index(filw,' ')-1)//'.som'
+            inquire(file=filsom,exist=filex)
+            if (filex) nfpi = 2
+         endif !! (filex) then
+         call openfile(filsom  ,isom,debug)
+         select case(nfpi)
+           case(0)
+             write(*,'(a,a)') filw(1:index(filw,' ')-1),
+     ,            '.{sg,som} not found! -> ALL'
+             allmo   = .TRUE.
+           case(1)
+             read (isom,*,iostat=i) itmpmo,itmp,npi
+             if (i.NE.0) stop 'ERROR reading .sg file'
+           case(2)
+             text   = ' respecto al eje: '
+             call sudgfdim(18  ,text,isom,icde,1  ,jjj,debug)
+             linear = jjj.EQ.0
+             rewind(isom)
+             if (linear) then
+                text   = 'SIGMA respecto al ej'
+             else
+                text   = 'SIGMA respecto al pl'
+             endif !! (linear) then
+             npi    = 0
+             jjj    = 0
+             irw    = 1
+             do while (jjj.EQ.0) 
+                call sudgfchk(text,20,isom,icde,irw,jjj,debug)
+                if (jjj.EQ.0) npi = npi+1
+             enddo !! while (jjj.EQ.0) 
+           case default
+             stop 'SIGMA/PI identification code not implemented'
+         end select !! case(nfpi)
          lsigma  = npi.GT.0
          allmo   = npi.LE.0
+         write(charint,'(I7)') npi
+         if (allmo) then
+            write(*,'("0 MOs) -> ALL")')
+         else
+            write(*,'(a," MOs)")') 
+     .                          trim(charint(verify(charint,' '):7))
+         endif !! (allmo) then
       elseif (index(trim(nome),'outsig').GT.0) then
          write(*,'(a,$)') 'OUTER SIGMA ORBS. # SIGMA = '
-         filsom = filw(1:index(filw,' ')-1)//'.som'
-         call       openfile(filsom  ,isom,debug)
-C.............
-         text   = ' respecto al eje: '
-         call sudgfdim(18  ,text,isom,icde,1  ,jjj,debug)
-         linear = jjj.EQ.0
-         rewind(isom)
-         if (linear) then
-            text   = 'SIGMA respecto al ej'
+         allmo  = .FALSE.
+         npi    = 0
+         write(*,'(a,$)') 'SIGMA ('
+         filsom = filw(1:index(filw,' ')-1)//'.sg'
+         inquire(file=filsom,exist=filex)
+         if (filex) then
+            nfpi = 1
          else
-            text   = 'SIGMA respecto al pl'
-         endif !! (linear) then
-C.............
-         npi = 0
-         jjj = 0
-         irw = 1
-         do while (jjj.EQ.0) 
-            call sudgfchk(text,20,isom,icde,irw,jjj,debug)
-            if (jjj.EQ.0) npi = npi+1
-         enddo !! while (jjj.EQ.0) 
-         write(charint,'(I7)') npi
-         write(*,'(a," MOs")') trim(charint(verify(charint,' '):7))
-         loutsig = npi.GT.0
+            filsom = filw(1:index(filw,' ')-1)//'.som'
+            inquire(file=filsom,exist=filex)
+            if (filex) nfpi = 2
+         endif !! (filex) then
+         call openfile(filsom  ,isom,debug)
+         select case(nfpi)
+           case(0)
+             write(*,'(a,a)') filw(1:index(filw,' ')-1),
+     ,            '.{sg,som} not found! -> ALL'
+             allmo   = .TRUE.
+           case(1)
+             read (isom,*,iostat=i) itmpmo,itmp,npi
+             if (i.NE.0) stop 'ERROR reading .sg file'
+           case(2)
+             text   = ' respecto al eje: '
+             call sudgfdim(18  ,text,isom,icde,1  ,jjj,debug)
+             linear = jjj.EQ.0
+             rewind(isom)
+             if (linear) then
+                text   = 'SIGMA respecto al ej'
+             else
+                text   = 'SIGMA respecto al pl'
+             endif !! (linear) then
+             npi    = 0
+             jjj    = 0
+             irw    = 1
+             do while (jjj.EQ.0) 
+                call sudgfchk(text,20,isom,icde,irw,jjj,debug)
+                if (jjj.EQ.0) npi = npi+1
+             enddo !! while (jjj.EQ.0) 
+           case default
+             stop 'SIGMA/PI identification code not implemented'
+         end select !! case(nfpi)
+         lsigma  = npi.GT.0
          allmo   = npi.LE.0
+         write(charint,'(I7)') npi
+         if (allmo) then
+            write(*,'("0 MOs) -> ALL")')
+         else
+            write(*,'(a," MOs)")') 
+     .                          trim(charint(verify(charint,' '):7))
+         endif !! (allmo) then
       elseif (index(trim(nome),'outersh').gt.0) then
          outersh = .TRUE.
          write(*,'(A)') 'Inner s shells will be omitted'
@@ -459,6 +533,8 @@ C >>> Initial data       <<<
       write(*,'("  >> NHeavy Atoms ......... ",$)') 
       write(charint,'(I7)') nheavy
       write(*,'(a       )') trim(charint(verify(charint,' '):7))
+      if (lpi.AND.nfpi.EQ.1.AND.itmpmo.NE.nmo) 
+     .      stop 'Incompatible # MO between .sg and wave function files'
 C >>> Select Atoms or basins<<<  line 5
       read(iinp,'(a)',iostat=iii) nome
       if (iii.ne.0) stop ' ** PROBLEM while the input file was read'
@@ -657,7 +733,7 @@ C          (determine # basins if lbom enabled):
          stop ' ** read,int,eloc,mwfn or fuk were not specified'
       endif !! (index(trim(nome),'int').gt.0) then
       if (genint) then 
-         print *,' ** Checking number of zeros in the file names'
+         print *,' >> Checking number of zeros in the file names'
          filex = .TRUE.
          iword = 1
          j = len(trim(nome))
@@ -696,12 +772,13 @@ C >>> Check   data       <<<
       if (nat.GT.maxato) stop ' ** Increase MAXATO, please **'
 C
       start  = omp_get_wtime()
+
       call       goon(iwfn,iout,iinp,isom,nmo,nprim,nat,allmo,iato,iint,
      +     allatoms,allheavy,outersh,lpi,npi,lloc,nindex,ndeloc,inpline,
      .version,nheavy,itype,bonddist,mxring,allring,genint,intfuk,lgiamb,
      +  runparal,nproc,lsigma,loutsig,imos,ifrmo,ifrag,ixyz,lxyz,nzeros,
      .           locc,nbasin,laom,lbom,lmwfnrdname,lmwfn,linear,laimall,
-     .                                         lpostHF,moldentype,debug)
+     .                                    nfpi,lpostHF,moldentype,debug)
       finish = omp_get_wtime()
       write(iout,'(/)')
       if (allring) then

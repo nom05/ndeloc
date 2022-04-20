@@ -28,14 +28,15 @@ C
 C=======================================================================
 C
       dimension         iamat(nato)         ,moc(itmo)
-      dimension       initmat(nato)
       dimension       matindx(ndeloc,nindex)
-      dimension      matnperm(nindex)
       dimension         deloc(ndeloc)       ,cloc(nato)
       dimension         giamb(ndeloc)
       dimension            xx(nato)         ,yy(nato)  ,zz(nato)
       dimension             s(nato,nmo,nmo)
-      dimension       matring(mxring,nindex)
+
+      integer,dimension(:),allocatable :: initmat,matnperm
+      integer,dimension(:,:),allocatable :: matring
+      real*8,dimension(:),allocatable :: eachperm
 C
 C=======================================================================
 C
@@ -45,10 +46,12 @@ C
       if (debug) print *,'                          cloc,deloc,giamb ,ni
      .ndex,iperm,ndeloc,nato,iamat ,bonddist, xx ,yy zz  ,allring,nmo, m
      .atindx ,lloc,itmo,moc,luhf,locc,lgiamb, s  ,mxring,debug'
+
+      allocate(initmat(nato),matnperm(nindex),matring(mxring,nindex))
+      if (.NOT.lgiamb) allocate(eachperm(iperm))
 C
-      giamb = 0.0
-      deloc = 0.0
-      cloc  = 0.0
+      deloc = 0.d0
+      cloc  = 0.d0
 C
       if (debug) print *,'ORBS=',(moc(i),i=1,itmo)
 C
@@ -96,42 +99,41 @@ C
          enddo !! jc = 2,nindex
 C >>> Giambiagi part  START
          idi = 1 
-         do jc = 1,nindex
-            matnperm(jc) = matper(idi,jc)
-         enddo !! jc = 1,nindex
-         call       looptree(idi,idel,nato,nmo,ndeloc,iperm,nindex,itmo,
-     .                       nproc,icodeparb,matnperm,moc,s,giamb,debug)
-         if (debug) print *,'giamb=',giamb(idel)
+         matnperm(:) = matper(idi,:)
+         call       looptree(nato,nmo,nindex,itmo,nproc
+     ,                      ,icodeparb,matnperm,moc,s,giamb(idel),debug)
+         if (debug) print *,'giamb',idel,'=',giamb(idel)
 C >>> Giambiagi part  END
 C >>> Ponec     part  START
          if (.NOT.lgiamb) then
             icodeparb = icodepar
+            eachperm(1) = giamb(idel)
             if (nproc.GT.1) nprfrag = nproc
-            deloc(idel) = giamb(idel)
             call permut(iperm,nindex,matper)
             icount = 2
 C$OMP PARALLEL default(none) num_threads(nproc)          
 C$OMP&              if(icodeparb.EQ.2)                   
 C$OMP&         private(ifrag,idi,jc,matnperm)
 C$OMP&          shared(iperm,nprfrag,nindex,idel,nato,nmo,ndeloc,itmo,
-C$OMP&                 nproc,icodeparb,matper,moc,s,debug,icount)
-C$OMP&       reduction(+:deloc)
-C
+C$OMP&         deloc,nproc,icodeparb,matper,moc,s,debug,icount,eachperm)
+
 C$OMP DO
             do idi = 2,iperm   !!  !!PERMUTATIONS
                call showprog(
      .                          (idel-1)*iperm+icount-1
      ,,                         ndeloc*iperm
      .                      )
-               do jc = 1,nindex
-                  matnperm(jc) = matper(idi,jc)
-               enddo !! jc = 1,nindex
-               call looptree(idi,idel,nato,nmo,ndeloc,iperm,nindex,itmo,
-     .                       nproc,icodeparb,matnperm,moc,s,deloc,debug)
-               icount = icount+1
+               matnperm(:nindex) = matper(idi,:nindex)
+               call looptree(nato,nmo,nindex,itmo,nproc
+     ,                    ,icodeparb,matnperm,moc,s,eachperm(idi),debug)
+               icount = icount + 1
             enddo !! idi = 2,iperm   !!  !!PERMUTATIONS
 C$OMP END DO
+C$OMP WORKSHARE
+            deloc(idel) = sum(eachperm)
+C$OMP END WORKSHARE
 C$OMP END PARALLEL
+            if (debug) PRINT *,'deloc',idel,':',deloc(idel)
          endif !! (.NOT.lgiamb) then
 C >>> Ponec     part  END
          call       showprog(
@@ -143,12 +145,14 @@ C ++++++ DELOC LOOPS END
 C ++++++        PART OF LOC INDICES
       if (lloc) then !! Paralelización?
          idi   = 1
+         icodeparb = 1
          write(*,'(/,"  >> Computing requested localization indices: ")'
      .        )
          do iaa = 1,nato
             matnperm = iaa
-            call    looptree(idi,iaa ,nato,nmo,nato  ,iperm,nindex,itmo,
-     .                       nproc,icodeparb,matnperm,moc,s,cloc ,debug)
+            call    looptree(nato,nmo,nindex,itmo,nproc
+     ,                      ,icodeparb,matnperm,moc,s,res,debug)
+            cloc(iaa) = cloc(iaa) + res
             call showprog(
      .                          iaa
      ,,                         nato

@@ -1,7 +1,8 @@
       function nbinom(iup,idown,nmax,debug)
       implicit real*8 (a-h,o-z)
       logical   debug
-      dimension c(0:nmax,0:nmax)
+      real*8,dimension(:,:),allocatable :: c
+      allocate(c(0:nmax,0:nmax))
       if (debug) print *,'function nbinom=',iup,idown,nmax,debug
       c = 0
       c(0,0) = 1

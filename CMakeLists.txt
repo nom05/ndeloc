@@ -3,11 +3,9 @@
 # States that CMake required version must be greater than 2.6
 cmake_minimum_required(VERSION 2.6)
 
-## >> DEFAULT COMPILER << ## Force compiler you want
-set(CMAKE_Fortran_COMPILER gfortran)
-#set(CMAKE_Fortran_COMPILER ifort)
-set(CMAKE_GENERATOR_FC gfortran)
-#set(CMAKE_GENERATOR_FC ifort)
+## >> DEFAULT COMPILER << ## To force compiler, use:
+# cmake -DCMAKE_Fortran_COMPILER=gfortran src_directory
+
 message("CMAKE_Fortran_COMPILER is ${CMAKE_Fortran_COMPILER}")
 message("CMAKE_GENERATOR_FC is ${CMAKE_GENERATOR_FC}")
 
@@ -46,6 +44,7 @@ else (Fortran_COMPILER_NAME MATCHES "gfortran.*")
   set (CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g")
 endif (Fortran_COMPILER_NAME MATCHES "gfortran.*")
 
+message("CMAKE_Fortran_COMPILER_VERSION: " "${CMAKE_Fortran_COMPILER_VERSION}")
 find_package(OpenMP)
 if (OPENMP_FOUND)
    message("OPENMP FOUND")
@@ -54,8 +53,13 @@ if (OPENMP_FOUND)
      set (OpenMP_C_FLAGS              "-fopenmp")
    elseif (Fortran_COMPILER_NAME MATCHES "ifort.*")
      # ifort
-     set (OpenMP_C_FLAGS              "-openmp")
+     if(CMAKE_Fortran_COMPILER_VERSION LESS "14.*")
+        set (OpenMP_C_FLAGS            "-openmp")
+     elseif(CMAKE_Fortran_COMPILER_VERSION GREATER_EQUAL "14.*")
+        set (OpenMP_C_FLAGS            "-qopenmp")
+     endif(CMAKE_Fortran_COMPILER_VERSION LESS "14.*")
    endif (Fortran_COMPILER_NAME MATCHES "gfortran.*")
+   message("OPENMP FLAGS: " ${OpenMP_C_FLAGS})
    set (CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_RELEASE} ${OpenMP_C_FLAGS}")
    set (CMAKE_Fortran_FLAGS_DEBUG "${CMAKE_Fortran_FLAGS_RELEASE} ${OpenMP_C_FLAGS}")
    if (CMAKE_BUILD_TYPE MATCHES "RELEASE")

@@ -19,7 +19,7 @@ C
       dimension iatoma(iatt)
       dimension    pop(iatt)
       dimension     ss(iatt,nmo,nmo)
-      dimension   ptmp(nat)
+      real*8,dimension(:),allocatable :: ptmp
 C***********************************************************************
 c     rnucchar(0)= 0.0
 C***********************************************************************
@@ -27,6 +27,8 @@ C***********************************************************************
      .,'pop,ss',debug
       if (debug) print *,'                     ieloc,nmo,nat,iatt,iatoma
      ., pop,ss ,debug'
+
+      allocate(ptmp(nat))
 C
       rewind(ieloc)
       text = 'orb1,orb2 = '

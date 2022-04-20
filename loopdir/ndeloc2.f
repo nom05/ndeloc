@@ -11,7 +11,7 @@ C=======================================================================
 C
       dimension      iamat(*),moc(*)
       dimension      deloc(*),cloc(*)
-      dimension      f(nato,nato)
+      real*8,dimension(:,:),allocatable :: f
       dimension      s(nato,nmo,nmo)
 C
 C=======================================================================
@@ -21,6 +21,7 @@ C
       if (debug) print *,'                         cloc ,  deloc ,ndeloc
      .,nato,iamat(nato),nmo,itmo,moc(itmo), s ,nproc,luhf,locc,debug'
 C
+      allocate(f(nato,nato))
       iac = 0
       f   = 0.0
 C

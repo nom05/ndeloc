@@ -46,3 +46,9 @@ C               - Parallelization revised.
 C               - 'debug' mode can be set from the 1st input line adding the word 'debug'
 C               - Bug fixes.
 C 		- New progress bar.
+C *** 1.2.16 ** - Important bug fix to avoid problems with arrays using stack memory.
+C               - CMake changed. We remove the command "set" to force compilers.
+C                 cmake -DCMAKE_Fortran_COMPILER=compiler instead
+C               - Localization indices fix to use parallelization.
+C               - .sg format support for SIGMA/PI identification.
+C               - Help message update to avoid problems with ifort and a limit of text length.

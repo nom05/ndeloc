@@ -8,11 +8,15 @@
      ."                           - molden reading algorithm.        ",/
      ."              *  # threads to be used through OpenMP."         ,/
      ."              *  debug  -> debug mode is set."                 ,/
+     .)')   !!   HELP END
+          write(*,'(
      ."     o Line 2 :  OUTPUT          specification:"               ,/
      ."              *  text   -> file without extension."            ,/
      ."              *  xyz    -> print xyz with the N-DELOC indices" ,/
      ."                           (if ring is specified)"             ,/
      ."                           (only for Chemcraft)"               ,/
+     .)')   !!   HELP END
+          write(*,'(
      ."     o Line 3 :  MO + occ        specification:"               ,/
      ."              *  all    -> All mol orbitals included."         ,/
      ."              *  pi     -> All PI mol orbitals included."      ,/
@@ -22,6 +26,8 @@
      ."                           dash (this example: 1,3,4,5)."      ,/
      ."              *  occ    -> Occupation numbers will be used to" ,/
      ."                           scale multidet. overl. matrices."   ,/
+     .)')   !!   HELP END
+          write(*,'(
      ."     o Line 4 :  N-(DE)LOC index specification and overlap "   ,/
      ."                 matrix type:"                                 ,/
      ."              *  integer-> N-(DE)LOC index order."             ,/
@@ -34,6 +40,8 @@
      ."              *  bom    -> Basin  overlap matrices. mwfn is "  ,/
      ."                           uniquely the compatible format for ",/
      ."                           this option."    ,/
+     .)')   !!   HELP END
+          write(*,'(
      ."     o Line 5 :  Atom specification:"                          ,/
      ."              *  all    -> All atoms will be included."        ,/
      ."              *  heavy  -> All heavy atoms will be included."  ,/
@@ -43,6 +51,8 @@
      ."              *  ring   -> Ring detection."                    ,/
      ."                           It is used together with all prev." ,/
      ."                           options."                           ,/
+     .)')   !!   HELP END
+          write(*,'(
      ."     o Line 6 :  Atomic Overlap Matrices specification:"       ,/
      ."              *  read   -> Files will be read below."          ,/
      ."              *  fuk    -> fuk format to be used: mol_mol_X01.",/
@@ -56,5 +66,7 @@
      ."                           name.                              ",/
      ."              *  Integer-> length for atom label"              ,/
      ."                           (1=X1,2=X01,3=X001, ...)"           ,/
+     .)')   !!   HELP END
+          write(*,'(
      ."     o Lines 7-... :  Files (if applicable)."                  ,/
      .)')   !!   HELP END

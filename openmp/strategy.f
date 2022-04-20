@@ -26,6 +26,6 @@
             if (nmo.NE.nproc.AND.real(mod(nmo,nproc)).LT.real(nproc)/2.)
      .                          icolapse = 2
          endif !! (nproc.EQ.1) then
-         write(*,'("  >> Parallelization strategy ...",2(X,I1))') 
+         write(*,'("  >> Parallel. strategy ...",2(X,I1))') 
      .                                                 icodepar,icolapse
       end subroutine strategy

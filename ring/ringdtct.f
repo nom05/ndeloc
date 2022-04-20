@@ -17,9 +17,12 @@ C-----------------------------------------------------------------------
 C=======================================================================
 C
       dimension      xx(nato),yy(nato),zz(nato)
-      dimension      dist(ncomb2)
-      dimension      matats(nato)  ,indx2(ncomb2),iamat(nato)
-      dimension      matcomb2(ncomb2,2),matring(mxring,nindex)
+      dimension      iamat(nato)
+      dimension      matring(mxring,nindex)
+
+      real*8,allocatable,dimension(:) :: dist
+      integer,allocatable,dimension(:) :: matats,indx2
+      integer,allocatable,dimension(:,:) :: matcomb2
 C
 C=======================================================================
 C
@@ -33,6 +36,9 @@ C
       if (debug) print *,'                         ncomb,ncomb2,nato,nin
      .dex,xx(nato),yy(nato),zz(nato),mxring,bonddist,nring, matring ,deb
      .ug'
+
+      allocate(dist(ncomb2),matats(nato),indx2(ncomb2))
+      allocate(matcomb2(ncomb2,2))
 C
 C >>> Generate all 2-comp combs <<<
       do i = 1,nato
@@ -63,7 +69,7 @@ C >>> Sort dist vector   <<<
       endif !! (debug) then
 C >>> Detect last bond   <<<
       write(charreal,'(F15.3)') bonddist
-      write(*,'("  >> Bond dist cut-off ",4("."),X,a," au")')  
+      write(*,'("  >> Bond dist cut-off ",4("."),X,a," A")')  
      .                           trim(charreal(verify(charreal,' '):15))
       nbond = 0
       do i = 1,ncomb2
@@ -74,7 +80,7 @@ C >>> Detect last bond   <<<
       write(*,'("  >> # bonds ",14("."),X,a)') 
      .                            trim(charintu(verify(charintu,' '):7))
       write(charreal,'(F15.3)') dist(indx2(nbond))
-      write(*,'("  >> Frontier distances ",3("."),$)')  
+      write(*,'("  >> Frontier dists in A ",2("."),$)')  
       do i = nbond-2,nbond+1
          write(charreal,'(F15.3)') dist(indx2(i))
          write(charintu,'(I7)') iamat(matcomb2(indx2(i),1))

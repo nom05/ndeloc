@@ -1,7 +1,7 @@
 C=======================================================================
 C
-      subroutine       looporb9(idi,idel,nato,nmo,ndeloc,iperm,nindex,
-     .                     nproc,icodepar,itmo,matper,moc,s,res  ,debug)
+      subroutine       looporb9(nato,nmo,nindex,
+     .                    nproc,icodepar,itmo,matper,moc,s,result,debug)
 C
 C-----------------------------------------------------------------------
       implicit real*8 (a-h,o-z)
@@ -11,7 +11,6 @@ C=======================================================================
 C
       dimension moc(*)
       dimension matper(nindex)
-      dimension res(ndeloc)
       dimension s(nato,nmo,nmo)
 C
 C=======================================================================
@@ -53,11 +52,9 @@ C >>> END Deloc Calculation <<<
          enddo !! jom = 1,itmo                      !! 2
       enddo !! iom = 1,itmo                         !! 1
 C$OMP END PARALLEL DO
-      res(idel) = res(idel)+result
 
       return
       end
 C=======================================================================
 C
-
 

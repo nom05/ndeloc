@@ -16,10 +16,12 @@ C
 C=======================================================================
 C
       dimension     xx(nat)  ,yy(nat),zz(nat)
-      dimension     ibondmat(nat,nat),indx2(ncomb2),irow(nat)
-      dimension     matats(nat),ibndpsum(ncomb)
-      dimension     matcomb2(ncomb2,2),matcomb(ncomb,nindex)
-      dimension     matring(mxring,nindex),newtemp(nindex)
+      dimension     indx2(ncomb2)
+      dimension     matcomb2(ncomb2,2)
+      dimension     matring(mxring,nindex)
+
+      integer,allocatable,dimension(:) :: irow,matats,ibndpsum,newtemp
+      integer,allocatable,dimension(:,:) :: ibondmat,matcomb
 C=======================================================================
 C
 c     external ndelocma
@@ -30,6 +32,9 @@ C***********************************************************************
      .dex,nat ,'matcomb2 ,indx2,xx,yy,zz',mxring,nring,'matring',debug
       if (debug) print *,'                        nbond,ncomb2,ncomb,nin
      .dex,nat , matcomb2 ,indx2,xx,yy,zz ,mxring,nring, matring ,debug'
+
+      allocate(irow(nat),matats(nat),ibndpsum(ncomb),newtemp(nindex))
+      allocate(ibondmat(nat,nat),matcomb(ncomb,nindex))
 C
 C >>> Bond matrix        <<<
       ibondmat = 0

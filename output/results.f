@@ -18,6 +18,7 @@ C-----------------------------------------------------------------------
       character*100  filwfn,filinp,filout,filw,filsom,filint,filxyz,
      .               filouw
       character*1000 nome
+      real*8,dimension(:),allocatable :: deloctot
 C
 C----------------------------------------------------------------------
       include '../elements.h' !! Includes char definitions,dimension,data
@@ -36,7 +37,7 @@ C
       dimension      xx(*)   , yy(*), zz(*)
       dimension   xyzgc(3,ndeloc)
       dimension matindx(ntotdel,nindex)
-      dimension  filint(iato),atoms(iato),cloc(iato),deloctot(iato)
+      dimension  filint(iato),atoms(iato),cloc(iato)
 C***********************************************************************
 C     iout       = 4
 C***********************************************************************
@@ -53,6 +54,9 @@ C***********************************************************************
      .,itmo,itype,bonddist,allring,ntotdel,luhf,lpostHF,loutsig,lsigma,g
      .enint,intfuk, moc ,ixyz,lxyz, xx,yy,zz,xyzgc ,nzeros,nbasin,laom,l
      .bom,linear,debug'
+
+      allocate(deloctot(iato))
+
 C >>> Open output file
       open(unit=iout,file=filout,status='unknown',form='formatted')
 C >>> HEADER <<<
@@ -188,7 +192,7 @@ C >>> SUMMARY <<<
          write(iout,'(     5X,"* # detected rings ...... ",a)')
      .                              trim(charint(verify(charint,' '):7))
          write(charreal,'(F15.3)') bonddist
-         write(iout,'(     5X,"* Bond dist cut-off ..... ",a)')
+         write(iout,'(     5X,"* Bond dist cut-off ..... ",a,X,"A")')
      .                           trim(charreal(verify(charreal,' '):15))
          if (lxyz) write(iout,'(     5X,"* XYZ Files with DELOC .. YES")
      .')

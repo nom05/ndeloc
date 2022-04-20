@@ -19,8 +19,9 @@ C
 C=======================================================================
 C
       dimension iatoma(iatt)
-      dimension    pop(iatt),arratmp(nmo*(nmo+1)/2)
+      dimension    pop(iatt)
       dimension     ss(iatt,nmo,nmo)
+      real*8,dimension(:),allocatable :: arratmp
 C***********************************************************************
 c     rnucchar(0)= 0.0
 C***********************************************************************
@@ -28,6 +29,9 @@ C***********************************************************************
      ,,iatt,iatoma,'pop,ss',debug
       if (debug) print *,'                     imwfn,nmo,nat,laom,lbom
      ,,iatt,iatoma, pop,ss ,debug'
+
+      allocate(arratmp(nmo*(nmo+1)/2))
+
       rewind(imwfn)
       text(:) = ''
       if (laom.AND..NOT.lbom) then

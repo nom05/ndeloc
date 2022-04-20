@@ -2,9 +2,12 @@
 C
 C ... This subroutine calculates n-1 permutations without repetition
 C
-      integer n,i,a
+      integer n,i
       logical nextp
-      dimension a(n-1),matper(iperm,n)
+      dimension matper(iperm,n)
+      integer,dimension(:),allocatable :: a
+
+      allocate(a(n-1))
 C
       do i = 1,n-1
          a(i) = i

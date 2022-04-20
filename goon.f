@@ -5,7 +5,7 @@ C
      .version,nheavy,itype,bonddist,mxring,allring,genint,intfuk,lgiamb,
      .  runparal,nproc,lsigma,loutsig,imos,ifrmo,ifrag,ixyz,lxyz,nzeros,
      .           locc,nbasin,laom,lbom,lmwfnrdname,lmwfn,linear,laimall,
-     .                                         lpostHF,moldentype,debug)
+     .                                    nfpi,lpostHF,moldentype,debug)
 C
 C-----------------------------------------------------------------------
       implicit double precision (a-h,o-z)
@@ -15,9 +15,8 @@ C-----------------------------------------------------------------------
       logical        allatoms,allheavy,allring,lgiamb,laom,lbom
       integer        itype !! =0 wfn, =1 fchk, =2 molden
       character*3    atemp
-      character*7    atoms,version,charint
+      character*7    version,charint
       character*15   charreal,atomlabel
-      character*100  filint
       character*100  filwfn,filinp,filout,filw,filsom,command,filouw
       character*1000 nome
       integer,dimension (:)    , allocatable :: mocred
@@ -35,16 +34,12 @@ C
 !23456789 123456789 123456789 123456789 123456789 123456789 123456789 12
 C=======================================================================
 C
-      dimension      iq(nat)   ,iheavy(nat)
-      dimension iatomat(iato)
-      dimension matindx(ndeloc,nindex)
-      dimension     pop(iato)  ,cloc(iato)
-      dimension   deloc(ndeloc),giamb(ndeloc)
-      dimension      xx(nat)   , yy(nat), zz(nat)
-      dimension     xxr(nat)   ,yyr(nat),zzr(nat)
-      dimension  filint(iato)  ,atoms(iato)
-      dimension     moc(nmo)          !! Array with the MOs used for the
-                                      !! calculations.
+      integer,dimension(:),allocatable :: iq,iheavy,iatomat,moc
+      integer,dimension(:,:),allocatable :: matindx
+      real*8,dimension(:),allocatable :: pop,cloc,deloc,giamb,xx,yy,zz
+     .                                 , xxr,yyr,zzr
+      character(len=100),dimension(:),allocatable :: filint
+      character(len=7),dimension(:),allocatable :: atoms
 C=======================================================================
 C
       external ndeloc1
@@ -52,18 +47,24 @@ C
 C***********************************************************************
 c     lloc = .FALSE.
 C***********************************************************************
+      allocate(iq(nat),iheavy(nat),iatomat(iato),matindx(ndeloc,nindex))
+      allocate(pop(iato),cloc(iato),deloc(ndeloc),giamb(ndeloc))
+      allocate(xx(nat),yy(nat),zz(nat),xxr(nat),yyr(nat),zzr(nat))
+      allocate(filint(iato),atoms(iato))
+      allocate(moc(nmo))          !! Array with the MOs used for the
+                                  !! calculations.
       if (debug) print *,'In SUBROUTINE goon :',iwfn,iout,iinp,isom,nmo,
      .nprim,nat,allmo,iato,iint,allatoms,allheavy,outersh,lpi,npi,locc,l
      .loc,nindex,ndeloc,inpline,nheavy,itype,bonddist,mxring,allring,gen
      .int,intfuk,runparal,nproc,lsigma,loutsig,imos,ifrmo,ifrag,ixyz,lxy
-     .z,nzeros,laimall,nbasin,laom,lbom,lmwfnrdname,lmwfn,linear,lpostHF
-     .,moldentype,debug
+     .z,nzeros,laimall,nbasin,laom,lbom,lmwfnrdname,lmwfn,linear,nfpi,lp
+     .ostHF,moldentype,debug
       if (debug) print *,'                      iwfn,iout,iinp,isom,nmo,
      .nprim,nat,allmo,iato,iint,allatoms,allheavy,outersh,lpi,npi,locc,l
      .loc,nindex,ndeloc,inpline,nheavy,itype,bonddist,mxring,allring,gen
      .int,intfuk,runparal,nproc,lsigma,loutsig,imos,ifrmo,ifrag,ixyz,lxy
-     .z,nzeros,laimall,nbasin,laom,lbom,lmwfnrdname,lmwfn,linear,lpostHF
-     .,moldentype,debug'
+     .z,nzeros,laimall,nbasin,laom,lbom,lmwfnrdname,lmwfn,linear,nfpi,lp
+     .ostHF,moldentype,debug'
 C
 C >>> Read wavefunction file   <<<
       select case(itype)
@@ -79,6 +80,7 @@ C >>> Read wavefunction file   <<<
           call   readmold(iwfn,moldentype,nmo,nprim,nat,debug,xx,yy,zz,
      .                                nheavy,iq,pel,iheavy,luhf,lpostHF)
       end select !! case(itype)
+
 C >>> Read  atom/basin matrix  <<<
       rewind(iinp)
       if (.NOT.allatoms.AND..NOT.allheavy) then
@@ -245,13 +247,36 @@ C >>> Choose MOs for calc<<<
          enddo !! i = 1,nmo
          imo = nmo
       elseif (lpi)     then
-         if (debug) print *,'** PI    MOL ORBS **'
+         if (debug) print *,'** PI    MOL ORBS ** nfpi=',nfpi
          imo = npi
-         call       readsom(isom,lpi,imo,moc,linear,debug)
+         select case(nfpi)
+           case(1)
+             rewind(isom)
+             read(isom,*,iostat=i) j,j
+             if (j.NE.imo) stop 'ERROR: .sg or # pi MO modified!'
+             read (isom,*,iostat=j) moc(:imo)
+             if (i.NE.0.OR.j.NE.0) stop 'ERROR: Reading .sg file'
+           case(2)
+             call   readsom(isom,lpi,imo,moc,linear,debug)
+           case default
+             stop 'ERROR: PI enabled without file type'
+         end select !! case(nfpi)
       elseif (lsigma)  then
-         if (debug) print *,'** SIGMA MOL ORBS **'
+         if (debug) print *,'** SIGMA MOL ORBS ** nfpi=',nfpi
          imo = npi
-         call       readsom(isom,lpi,imo,moc,linear,debug)
+         select case(nfpi)
+           case(1)
+             rewind(isom)
+             read(isom,*,iostat=i) j,j,j
+             if (j.NE.imo) stop 'ERROR: .sg or # pi MO modified!'
+             read (isom,'(A)')
+             read (isom,*,iostat=j) moc(:imo)
+             if (i.NE.0.OR.j.NE.0) stop 'ERROR: Reading .sg file'
+           case(2)
+             call   readsom(isom,lpi,imo,moc,linear,debug)
+           case default
+             stop 'ERROR: SIGMA enabled without file type'
+         end select !! case(nfpi)
       elseif (outersh) then
          if (debug) print *,'** OUTER MOL ORBS **'
          imo = nmo-nheavy
@@ -260,12 +285,25 @@ C >>> Choose MOs for calc<<<
          enddo !! i = nheavy+1,nmo
          if (lpostHF) imo = imo-nheavy
       elseif (loutsig) then
-         if (debug) print *,'** OUTER SIGMA MOL ORBS **'
+         if (debug) print *,'** OUTER SIGMA MOL ORBS ** nfpi=',nfpi
          imo = npi
-         call       readsom(isom,lpi,imo,moc,linear,debug)
+         select case(nfpi)
+           case(1)
+             rewind(isom)
+             read(isom,*,iostat=i) j,j,j
+             if (j.NE.imo) stop 'ERROR: .sg or # pi MO modified!'
+             read (isom,'(A)')
+             read (isom,*,iostat=j) moc(:imo)
+             if (i.NE.0.OR.j.NE.0) stop 'ERROR: Reading .sg file'
+           case(2)
+             call   readsom(isom,lpi,imo,moc,linear,debug)
+           case default
+             stop 'ERROR: OUTER SIGMA enabled without file type'
+         end select !! case(nfpi)
+         if (npi.LE.nheavy) stop '# Outer SIGMA MOs >= # MOs'
          imo = npi-nheavy
-         moc(1:imo) = moc(nheavy+1:nheavy+imo)
-         if (debug) print *,'@@ REAL outer sigma mol orbs:',moc(1:imo)
+         moc(:imo) = moc(nheavy+1:nheavy+imo)
+         if (debug) print *,'@@ REAL outer sigma mol orbs:',moc(:imo)
       else
          rewind(iinp)
          do i = 1,inpline-4
@@ -279,6 +317,7 @@ C >>> Choose MOs for calc<<<
       endif !! (allmo) then
       if (debug) print '("Specified MOs=",25I4)',(moc(i),i=1,imo)
       if (debug) print '("Total #   MOs=",  I4)',imo
+
 C >> IF lpostHF, reduce set of MOs if null occ. numbers
       if (lpostHF) then
          allocate(mocred(imo))

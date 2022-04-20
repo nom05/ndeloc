@@ -15,10 +15,12 @@ C
 !23456789 123456789 123456789 123456789 123456789 123456789 123456789 12
 C=======================================================================
 C
-      dimension xx(nat),yy(nat),zz(nat),ex(nprim),pel(nmo)
-      dimension iq(nat),iheavy(nat),ic(nprim),it(nprim)
-      dimension eom(nmo)
-      dimension c(nmo,nprim)
+      dimension xx(nat),yy(nat),zz(nat),pel(nmo)
+      dimension iq(nat),iheavy(nat)
+      real*8,allocatable,dimension(:) :: eom
+      real*8,allocatable,dimension(:,:) :: c
+      real*8,allocatable,dimension(:) :: ex
+      integer,allocatable,dimension(:) :: ic,it
 C***********************************************************************
       luhf    = .FALSE.
       lpostHF = .FALSE.!! Post-HF method (occ. numbers are not integers)
@@ -27,6 +29,9 @@ C***********************************************************************
      .'xx,yy,zz',nheavy,'iq,iheavy',luhf,'ic,it,ex,pel,c',lpostHF
       if (debug) print *,'                         iwfn,nmo,nprim,debug,
      . xx,yy,zz ,nheavy, iq,iheavy ,luhf, ic,it,ex,pel,c,lpostHF'
+
+      allocate(eom(nmo),c(nmo,nprim),ex(nprim))
+      allocate(ic(nprim),it(nprim))
 C
       rewind(iwfn)
 C >>> NMO,NPRIM,NAT      <<<
