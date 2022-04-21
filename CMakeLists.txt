@@ -14,7 +14,7 @@ project(ndeloc)
 enable_language (Fortran)
 
 set(CMAKE_BUILD_TYPE Release)
-message(CMAKE_BUILD_TYPE is ${CMAKE_BUILD_TYPE})
+message("CMAKE_BUILD_TYPE is ${CMAKE_BUILD_TYPE}")
 # Of course, change “Release” (O3) with “Debug” (no optimizations) for debug builds.
 
 # make sure that the default is a RELEASE
@@ -48,17 +48,17 @@ message("CMAKE_Fortran_COMPILER_VERSION: " "${CMAKE_Fortran_COMPILER_VERSION}")
 find_package(OpenMP)
 if (OPENMP_FOUND)
    message("OPENMP FOUND")
-   if (Fortran_COMPILER_NAME MATCHES "gfortran.*")
-    # gfortran
-     set (OpenMP_C_FLAGS              "-fopenmp")
-   elseif (Fortran_COMPILER_NAME MATCHES "ifort.*")
-     # ifort
-     if(CMAKE_Fortran_COMPILER_VERSION LESS "14.*")
-        set (OpenMP_C_FLAGS            "-openmp")
-     elseif(CMAKE_Fortran_COMPILER_VERSION GREATER_EQUAL "14.*")
-        set (OpenMP_C_FLAGS            "-qopenmp")
-     endif(CMAKE_Fortran_COMPILER_VERSION LESS "14.*")
-   endif (Fortran_COMPILER_NAME MATCHES "gfortran.*")
+#  if (Fortran_COMPILER_NAME MATCHES "gfortran.*")
+#   # gfortran
+#    set (OpenMP_C_FLAGS              "-fopenmp")
+#  elseif (Fortran_COMPILER_NAME MATCHES "ifort.*")
+#    # ifort
+#    if(CMAKE_Fortran_COMPILER_VERSION LESS "14.*")
+#       set (OpenMP_C_FLAGS            "-openmp")
+#    elseif(CMAKE_Fortran_COMPILER_VERSION GREATER_EQUAL "14.*")
+#       set (OpenMP_C_FLAGS            "-qopenmp")
+#    endif(CMAKE_Fortran_COMPILER_VERSION LESS "14.*")
+#  endif (Fortran_COMPILER_NAME MATCHES "gfortran.*")
    message("OPENMP FLAGS: " ${OpenMP_C_FLAGS})
    set (CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_RELEASE} ${OpenMP_C_FLAGS}")
    set (CMAKE_Fortran_FLAGS_DEBUG "${CMAKE_Fortran_FLAGS_RELEASE} ${OpenMP_C_FLAGS}")
