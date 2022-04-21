@@ -2,10 +2,29 @@
 C
 C Program that calculates the N-DELOC indices.
 C
-C Nicolás Otero Martínez, April 20 2022
+C * Authors:
+C   - Nicolás Otero Martínez
+C   - Marcos Mandado Alonso
+C * Publications:
+C   - First implementation:
+C     o Mandado, M.; González-Moa, M. J.; Mosquera, R. A. "QTAIM n-center
+C       delocalization indices as descriptors of aromaticity in mono and
+C       polyheterocycles", J. Comput. Chem. 28, 127-136 (2007).
+C     o Mandado, M.; González-Moa, M. J.; Mosquera, R. A. "Chemical graph theory
+C       and n-center electron delocalization indices: A study on polycyclic
+C       aromatic hydrocarbons", J. Comput. Chem. 28, 1625-1633 (2007).
+C   - Initial version of the program developed for:
+C     o Karamanis, P.; Otero, N.; Pouchan, C. "Unleashing the Quadratic
+C       Nonlinear Optical Responses of Graphene by Confining White-Graphene
+C       (h-BN) Sections in Its Framework", J. Am. Chem. Soc. 136,
+C       7464-7473 (2014).
+C * Quicksort module author:
+C   - David Bal (GPL3?)
+C     https://bitbucket.org/daviddbal/
+C * Last edited: April 21 2022
 C
 C =====================
-C === Version 1.2.16 ==
+C === Version 1.2.17 ==
 C =====================
 C
 C#######################################################################
@@ -15,7 +34,7 @@ C   $ Exit this file
 C   $ mkdir build; cd build
 C   $ cmake ..
 C   $ make
-C * To force use of compiler (gfortran,ifort,...)
+C * To force the use of a specific compiler (gfortran,ifort,...)
 C   $ cmake -DCMAKE_Fortran_COMPILER=compiler ..
 C#######################################################################
 C EXAMPLES  :

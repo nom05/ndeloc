@@ -1,7 +1,7 @@
 !23456789 123456789 123456789 123456789 123456789 123456789 123456789 12
 C
       subroutine    ringdtct(ncomb,ncomb2,nato,nindex,xx,yy,zz,mxring,
-     .                               iamat,bonddist,nring,matring,debug)
+     .                         nproc,iamat,bonddist,nring,matring,debug)
 C
 C-----------------------------------------------------------------------
       implicit real*8 (a-h,o-z)
@@ -32,10 +32,10 @@ C=======================================================================
 C
       if (debug) print *,'In SUBROUTINE ringdtct:',ncomb,ncomb2,nato,nin
      .dex,xx(nato),yy(nato),zz(nato),mxring,bonddist,nring,'matring',deb
-     .ug
+     .ug,nproc
       if (debug) print *,'                         ncomb,ncomb2,nato,nin
      .dex,xx(nato),yy(nato),zz(nato),mxring,bonddist,nring, matring ,deb
-     .ug'
+     .ug,nproc'
 
       allocate(dist(ncomb2),matats(nato),indx2(ncomb2))
       allocate(matcomb2(ncomb2,2))
@@ -57,7 +57,8 @@ C >>> Average dist vector<<<
       endif !! (debug) then
 C >>> Sort dist vector   <<<
       qtime1 = omp_get_wtime()
-      call       indexx(ncomb2,dist,indx2)
+c     call       indexx(ncomb2,dist,indx2)
+      call indexxabs(dist,indx2,ncomb2,.FALSE.,nproc,debug)
       qtime2 = omp_get_wtime()
       write(charreal,'(F15.2)') qtime2-qtime1
       write(*,'("  >> qcksort spent ",8("."),X,a," s")')  

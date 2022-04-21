@@ -123,6 +123,12 @@ set (LOOPDIR
     ${lpd}/ndeloc1.f
     ${lpd}/ndeloc2.f
 )
+### >> MODULES           subrout. << ##
+add_subdirectory(modules)
+set(mod modules)
+set (MODULES
+    ${mod}/quicksort.f90
+)
 ### >> OPENMP            subrout. << ##
 add_subdirectory(openmp)
 set(omp openmp)
@@ -167,7 +173,7 @@ set (RING
 add_subdirectory(sort)
 set(srt sort)
 set (SORT
-    ${srt}/indexx.f
+    ${srt}/indexxabs.f90
 )
 ### >> MAIN COMPILATION << ##
    add_executable(ndeloc.x 
@@ -176,6 +182,7 @@ set (SORT
 	${COMMON}
 	${LOOPDIR}
 	${OPENMP}
+	${MODULES}
 	${OUTPUT}
 	${READ}
 	${RING}

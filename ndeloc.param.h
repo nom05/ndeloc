@@ -16,7 +16,7 @@ C----------------------------------------------------------------------
       parameter (extndout='.ndout'     ) !! Modify the size(character*6)
       parameter (extxyz  ='.xyz'       ) !! Modify the size(character*4)
 C----------------------------------------------------------------------
-      version            = '1.2.16'
-      debug              = .FALSE.
-c     debug              = .TRUE.
+      version            = '1.2.17'      !! 220421
+      debug              = .FALSE.       !! This option can be set from 
+c     debug              = .TRUE.        !! the input file.
 C----------------------------------------------------------------------

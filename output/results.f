@@ -71,8 +71,20 @@ C >>> HEADER <<<
       write(iout,'(9X,"+ ",a,"-(DE)LOC calculation :  ",a," +")') trim(c
      .harint(verify(charint,' '):7)),trim(filw)
       write(iout,formato)
-C >>> SUMMARY <<<
-      write(iout,'(2(/),3X,">> SUMMARY :",/        )')
+C >>> COMPUTATIONAL DETAILS <<<
+      write(iout,'(2(/),3X,">> REFS    :",/        )')
+      write(iout,'(5X,
+     ."* Authors",X,15("."),X,"Nicolás Otero Martínez")')
+      write(iout,'(31X,       "Marcos Mandado Alonso" )')
+      write(iout,'( 5X,"* Articles",X,14("."),X,
+     .                                "J.Comput.Chem.2007 28 127-136")')
+      write(iout,'(31X,             "J.Comput.Chem.2007 28 1625-1633")')
+      write(iout,'(31X,            "J.Am.Chem.Soc.2014 136 7464-7473")')
+      write(iout,'(5X,"* Quicksort module",X,6("."),X,
+     .                                            "David Bal (GPL3?)")')
+      write(iout,'(31X,            "https://bitbucket.org/daviddbal/")')
+C >>> COMPUTATIONAL DETAILS <<<
+      write(iout,'(2(/),3X,">> DETAILS :",/        )')
       write(iout,'(     5X,"* INPUT file ............ ",a)')trim(filinp)
       select case(itype)
         case(0)

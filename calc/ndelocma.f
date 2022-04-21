@@ -68,7 +68,7 @@ C >>> # 2-comp combs     <<<
 C >>> # n-comp combs     <<<
          ncomb  = nbinom(nato,nindex,nato,debug)
          call       ringdtct(ncomb,ncomb2,nato,nindex,xx,yy,zz,mxring,
-     .                               iamat,bonddist,nring,matring,debug)
+     .                         nproc,iamat,bonddist,nring,matring,debug)
          write(charint,'(I7)') nring
          write(*,'("  >> # Detected rings ",5("."),X,A)')
      .                              trim(charint(verify(charint,' '):7))
