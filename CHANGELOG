@@ -52,5 +52,5 @@ C                 cmake -DCMAKE_Fortran_COMPILER=compiler instead
 C               - Localization indices fix to use parallelization.
 C               - .sg format support for SIGMA/PI identification.
 C               - Help message update to avoid problems with ifort and a limit of text length.
-C *** 1.2.17 ** - Quicksort updated. Parallelized version, thanks to David Bal.
+C *** 1.2.17 ** - Quicksort updated. Parallelized version, from JAMS Fortran library.
 C               - REFs and authors included as comments and in the output file.

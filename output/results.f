@@ -81,8 +81,9 @@ C >>> COMPUTATIONAL DETAILS <<<
       write(iout,'(31X,             "J.Comput.Chem.2007 28 1625-1633")')
       write(iout,'(31X,            "J.Am.Chem.Soc.2014 136 7464-7473")')
       write(iout,'(5X,"* Quicksort module",X,6("."),X,
-     .                                            "David Bal (GPL3?)")')
-      write(iout,'(31X,            "https://bitbucket.org/daviddbal/")')
+     .                                   "JAMS Fortran library (MIT)")')
+      write(iout,'(31X,      "https://github.com/mcuntz/jams_fortran")')
+      write(iout,'(31X,                "(c) M.Cuntz, J.Mai, S.Thober")')
 C >>> COMPUTATIONAL DETAILS <<<
       write(iout,'(2(/),3X,">> DETAILS :",/        )')
       write(iout,'(     5X,"* INPUT file ............ ",a)')trim(filinp)

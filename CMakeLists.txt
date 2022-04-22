@@ -127,7 +127,9 @@ set (LOOPDIR
 add_subdirectory(modules)
 set(mod modules)
 set (MODULES
-    ${mod}/quicksort.f90
+    ${mod}/mo_kind.f90
+    ${mod}/mo_quicksort.f90
+    ${mod}/mo_utils.f90
 )
 ### >> OPENMP            subrout. << ##
 add_subdirectory(openmp)

@@ -1,59 +1,30 @@
-c     SUBROUTINE ALLNR(N,R,J,IFAULT)
-      SUBROUTINE ALLNR(N,R,mati,idi,matf,IFAULT)
+      subroutine allnr(n,itmp,mati,idi,matf,ifault)
 C
 C ALGORITHM AS 88 APPL.  STATIST.  (1975) VOL.24, NO.3
 C
-C WHEN CALLED  ONCE, GENERATES ALL POSSIBLE COMBINATIONS OF R  ITEMS
-C FROM A GROUP OF N ITEMS, EACH COMBINATION (REPRESENTED IN J AS
-C R ORDERED INTEGERS BETWEEN I AND N) IS PROCESSED WITHIN ALLNR.
-C
-      INTEGER R, J(R), mati(N),matf(idi,R)
+      integer itmp, iarray(itmp), mati(n),matf(idi,itmp)
       logical ifault
-C
-      IFAULT = .TRUE.
-c     IFAULT = 1
-      IF (R .LT. 1 .OR. R .GT. N) RETURN
-      IFAULT = .FALSE.
-c     IFAULT = 0
-      KOUNT  = 0
-      NMR    = N - R
-C
-C INTIALIZE J(1) TO LOWER LIMIT SEPARATELY, SINCE LOWER LIMIT FOR
-C EACH INDEX DEPENDS CN LOWER LIMIT FOR PREVIOUS INDEX
-C
-      I    = 1
-      J(1) = 1
-C
-C INITIALIZE INDICES FOR LOOPS I+i,...,R TO LOWER LIMITS
-C
- 1    IF (I .EQ.  R) GOTO 3
-      IP1 = I + 1
-      DO 2 L = IP1, R
- 2    J(L) = J(L - 1) + 1
-C
-C UPDATE THE COUNT (KOUNT) OF COMBINATIONS AND PROCESS THE CURRENT
-C COMBINATION.  THE CALL TO SUBROUTINE JOB MAY BE REPLACED BY
-C STATEMENTS TO PROCESS THE CURRENT COMBINATION,
-C
- 3    KOUNT = KOUNT + 1
-c     CALL JOB(N, R, J, KOUNT)
-      do io = 1,r
-         matf(kount,io) = mati(j(io))
-      enddo !! io = 1,r
-C
-C INCREMENT THE FIRST POSSIBLE INDEX (OF LOOP I) AMONG INDICES OF
-C LOOPS R, R-1, R-2....,1
-      I = R
- 4    IF (J(I) .LT.  NMR + I) GOTO 5
-      I = I - 1
-C
-C RETURN AFTER ALL INDICES HAVE ACHIEVED THEIR UPPER LIMITS
-C
-      IF (I .LE.  0) RETURN
-      GOTO 4
- 5    J(I) = J(I) + 1
-      GOTO 1
-      END
-C=======================================================================
-C
+
+      ifault = .TRUE.
+      if (itmp.LT.1.OR.itmp.GT.n) return
+      ifault = .FALSE.
+      icount = 0
+      nn     = n-itmp
+      i      = 1
+      iarray(1)   = 1
+ 1    if (i.EQ.itmp) goto 2
+      ip1    = i+1
+      do l   = ip1,itmp
+         iarray(l) = iarray(l-1) + 1
+      enddo
+ 2    icount = icount+1
+      matf(icount,:itmp) = mati(iarray(:itmp))
+      i      = itmp
+ 3    if (iarray(i).LT.nn+i) goto 4
+      i      = i-1
+      if (i.LE.0) return
+      goto 3
+ 4    iarray(i)   = iarray(i)+1
+      goto 1
+      end
 

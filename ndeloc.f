@@ -18,9 +18,25 @@ C     o Karamanis, P.; Otero, N.; Pouchan, C. "Unleashing the Quadratic
 C       Nonlinear Optical Responses of Graphene by Confining White-Graphene
 C       (h-BN) Sections in Its Framework", J. Am. Chem. Soc. 136,
 C       7464-7473 (2014).
-C * Quicksort module author:
-C   - David Bal (GPL3?)
-C     https://bitbucket.org/daviddbal/
+C * Quicksort module:
+C   - JAMS Fortran library
+C     https://github.com/mcuntz/jams_fortran
+C     Distributed under the MIT License
+C     Copyright (c) 2011-2020 Matthias Cuntz and Juliane Mai  
+C----------------------------------------------------------------------------
+C This file is part of the NDELOC: ``a program to compute multicenter electron
+C delocalization indices'', distributed under the MIT License.
+C Copyright (c) 2022 Nicolás Otero Martínez (nom05 at uvigo.es) and Marcos Mandado Alonso
+C (mandado at uvigo.es)
+C Permission is hereby granted, free of charge, to any person obtaining a copy
+C of this software and associated documentation files (the "Software"), to deal
+C in the Software without restriction, including without limitation the rights
+C to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+C copies of the Software, and to permit persons to whom the Software is
+C furnished to do so, subject to the following conditions:
+C The above copyright notice and this permission notice shall be included in all
+C copies or substantial portions of the Software.
+C----------------------------------------------------------------------------
 C * Last edited: April 21 2022
 C
 C =====================
