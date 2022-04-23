@@ -68,7 +68,7 @@ Follow the instructions:
 
 ## Execution
 
-You can run _NDELOC_: `./ndeloc.x
+You can run _NDELOC_: `./ndeloc.x`
 
 By default, when the program is executed without arguments, it prints a short help.
 
