@@ -54,8 +54,8 @@ To be finished ...
 *NOTE1:* The preferred platform or, more specifically, the platform the developers use is GNU/Linux. MS Windows is an untested alternative. Through WSL or WSL2 the compilation would be equivalent to the following instructions. It is beyond the scope of this manual to explain how to activate these options in MS Windows.
 
 Follow the instructions:
-   - Clone firstly the repository: git clone https://github.com/nom05/ndeloc
-	 - Enter in the directory: cd ndeloc
+   - Clone firstly the repository: ``git clone https://github.com/nom05/ndeloc``
+	 - Enter in the directory: `cd ndeloc`
    - Verify your current CMake version is equal or greater than 2.8.12 (probably we will change the requirements because this version is obsolete): cmake --version
    - Create a new directory called ``build'' and enter inside, for example: mkdir build; cd build
    - Next, create the compilation environment: cmake ..
