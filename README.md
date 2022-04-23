@@ -60,12 +60,11 @@ Follow the instructions:
    - Create a new directory called `build` and enter inside, for example: `mkdir build; cd build`
    - Next, create the compilation environment: `cmake ..`
       - CMake will detect the compiler searching from several targets. Usually, the first one it finds is GNU Fortran (gfortran). To specify another alternative compiler, use the option: `cmake -DCMAKE\_Fortran\_COMPILER=ifort ..`
-
-	*WARNING:* We recommend to use _gfortran_ as default compiler according to our tests. Intel Fortran compiler (_ifort_) does not represent any advantage over the former.
-
    - And finally compile the code: `make`
      TIP: To compile faster use several processor threads (increase the number of threads, \#threads) through the option `-j#threads`. For example, `make -j3` will set three (3) threads.
    - You will find the executable in the current compilation directory: `ndeloc.x`
+
+*WARNING:* We recommend to use _gfortran_ as default compiler according to our tests. Intel Fortran compiler (_ifort_) does not represent any advantage over the former.
 
 ## Execution
 
