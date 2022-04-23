@@ -76,6 +76,9 @@ C >>> COMPUTATIONAL DETAILS <<<
       write(iout,'(5X,
      ."* Authors",X,15("."),X,"Nicolás Otero Martínez")')
       write(iout,'(31X,       "Marcos Mandado Alonso" )')
+      write(iout,'(31X,       "(Department of Physical Chemistry,")')
+      write(iout,'(32X,       "University of Vigo,")')
+      write(iout,'(32X,       "Vigo, Galicia, Spain)")')
       write(iout,'( 5X,"* Articles",X,14("."),X,
      .                                "J.Comput.Chem.2007 28 127-136")')
       write(iout,'(31X,             "J.Comput.Chem.2007 28 1625-1633")')

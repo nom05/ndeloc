@@ -5,6 +5,10 @@ C
 C * Authors:
 C   - Nicolás Otero Martínez
 C   - Marcos Mandado Alonso
+C
+C     Department of Physical Chemistry,
+C     University of Vigo, Vigo, Galicia, Spain.
+
 C * Publications:
 C   - First implementation:
 C     o Mandado, M.; González-Moa, M. J.; Mosquera, R. A. "QTAIM n-center
