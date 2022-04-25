@@ -11,7 +11,9 @@ _NDELOC_ performs (de)localization indices calculations by means of the use of r
 
 ## How to cite
 
-The following publications must be cited in any work presenting results obtained with _NDELOC_:
+   - Otero, N.; Mandado, M. _NDELOC v1.2.17_ (2022), Universidade de Vigo.
+
+The following publications are recommended to be cited in any work presenting results obtained with _NDELOC_:
 
    - Mandado, M.; González-Moa, M. J.; Mosquera, R. A. "QTAIM n-center delocalization indices as descriptors of aromaticity in mono and polyheterocycles", *J. Comput. Chem.*, 28, 127-136 (**2007**).
    - Mandado, M.; González-Moa, M. J.; Mosquera, R. A. "Chemical graph theory and n-center electron delocalization indices: A study on polycyclic aromatic hydrocarbons", *J. Comput. Chem.*, 28, 1625-1633 (**2007**).
@@ -23,7 +25,9 @@ _NDELOC version 1.2.17_
 
 MIT LICENSE
 
-Copyright (c) 2022, Nicolás Otero Martínez (nom05 (at) uvigo.es) and Marcos Mandado Alonso (mandado (at) uvigo.es)
+Copyright (c) 2022, Nicolás Otero Martínez (nom05 (at) uvigo.es) and Marcos Mandado Alonso (mandado (at) uvigo.es).
+
+A small part of the program needs to use a _quicksort_ module to efficiently sort distances between pairs of atoms in a parallelized way. For this purpose, we have added the module called `mo_quicksort.f90`, together with its dependencies `mo_utils.f90` and `mo_kinds.f90`, from the [_JAMS Fortran library_](https://github.com/mcuntz/jams_fortran), distributed under the MIT license by Matthias Cuntz, Juliane Mai and Stephan Thober.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"),
